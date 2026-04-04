@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(mkdir -p \"D:/Projects-Claude-Code/prayer-app/docs/superpowers/plans\")",
+      "Bash(mkdir -p \"D:/Projects-Claude-Code/prayer-app/docs/superpowers/specs\")",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes)",
+      "Read(//d/Projects-Claude-Code/**)",
+      "Bash(npx create-next-app@latest prayer-app-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --yes)",
+      "Bash(cp -r eslint.config.mjs next-env.d.ts next.config.ts package.json postcss.config.mjs tsconfig.json public src \"D:/Projects-Claude-Code/prayer-app/\")",
+      "Bash(cp -r node_modules \"D:/Projects-Claude-Code/prayer-app/\")",
+      "Bash(cp package-lock.json \"D:/Projects-Claude-Code/prayer-app/\")",
+      "Bash(npm run:*)",
+      "Bash(npx next:*)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
