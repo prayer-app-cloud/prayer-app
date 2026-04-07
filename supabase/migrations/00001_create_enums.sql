@@ -6,6 +6,8 @@ CREATE TYPE category_enum AS ENUM (
   'finances',
   'inner_struggle',
   'work_school',
+  'work',
+  'school',
   'other'
 );
 

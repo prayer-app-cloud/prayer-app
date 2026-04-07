@@ -35,8 +35,13 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    await supabase.auth.signInAnonymously();
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) {
+      console.error("Anonymous sign-in failed:", error.message);
+    }
   }
 
+  // IMPORTANT: return supabaseResponse — it carries the session cookies
+  // set by setAll during getUser() or signInAnonymously().
   return supabaseResponse;
 }

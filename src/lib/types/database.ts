@@ -4,7 +4,8 @@ export type CategoryEnum =
   | "grief"
   | "finances"
   | "inner_struggle"
-  | "work_school"
+  | "work"
+  | "school"
   | "other";
 
 export type RequestStatusEnum =
