@@ -11,6 +11,7 @@ Post a prayer. Get prayed for.
 - Supabase (PostgreSQL + Auth + Realtime + Edge Functions)
 - Vercel (hosting)
 - FCM via Edge Functions (push notifications)
+- Gemini 2.0 Flash-Lite via Supabase Edge Functions (Prayer Points + Guided Prayer generation)
 - No Firebase. No ads SDK. No tracking pixels. No Facebook SDK. No location permissions.
 
 ## Non-negotiables
@@ -31,7 +32,7 @@ Categories are tappable pills on the post screen. NOT primary navigation. Home q
 ## Database Schema
 
 ### prayer_requests
-id (uuid PK), text (varchar 500), category (enum), session_id (varchar), email (varchar nullable), prayer_count (int default 0), share_count (int default 0), report_count (int default 0), status (enum: active/updated/answered/removed/expired), anonymous (bool default true), urgency (enum: normal/high), update_text (varchar 280 nullable), expires_at (timestamp), share_slug (varchar unique), is_seed (bool default false), created_at, updated_at
+id (uuid PK), text (varchar 500), category (enum), session_id (varchar), email (varchar nullable), prayer_points (text nullable — AI-generated bullet summary, approved by poster), guided_prayer (text nullable — AI-generated short prayer for pray-ers), prayer_count (int default 0), share_count (int default 0), report_count (int default 0), status (enum: active/updated/answered/removed/expired), anonymous (bool default true), urgency (enum: normal/high), update_text (varchar 280 nullable), expires_at (timestamp), share_slug (varchar unique), is_seed (bool default false), created_at, updated_at
 
 ### prayer_taps
 id (uuid PK), request_id (uuid FK), session_id (varchar), source (enum: community/screen_lock/seed), created_at
@@ -52,28 +53,33 @@ id (uuid PK), user_session_id (varchar), type (enum: prayer_received/request_ans
 ## Admin / Moderator Panel (password-protected route, /admin)
 
 ### Seed Management
-- **Create seed requests:** Form with text, category, prayer_count, created_at. All marked is_seed=true.
-- **Set prayer count:** Manually set prayer_count on any request (seed or real). This updates the displayed number directly.
-- **Create seed taps:** Admin can create prayer_taps with source=seed for data consistency.
-- **Adjust counts:** Admin can increase or decrease prayer_count on any request at any time.
-- **Add answered updates:** Create answered-prayer updates on seed requests.
+- **Generate seeds:** Form to create seed prayer requests (text, category, prayer_count, created_at). All marked is_seed=true.
+- **Bulk import:** Upload CSV/JSON of seed requests with staggered timestamps.
+- **Set prayer count:** Manually set prayer_count on any request (seed or real). This updates the displayed number directly — no fake tap records needed for seeds.
+- **Add answered updates:** Create seed answered-prayer updates on seed requests.
 - **Expiry override:** Extend or reset expiry on any request.
+- **Seed dashboard:** See count of seed vs organic requests, seed vs organic taps. Track when organic overtakes seeded.
 
 ### Moderation
 - **Review queue:** Flagged/reported requests, auto-blocked content, self-harm triggers.
 - **Actions:** Approve, remove, edit, ban session_id.
+- **Crisis view:** Requests containing self-harm keywords — review and add resource links.
 
-### Analytics (v1 — keep simple)
+### Analytics (simple)
 - Total requests (seed/organic split)
 - Total prayer taps (seed/organic split)
 - Coverage rate (% of requests with 1+ prayer in 24h)
 - Active users (sessions in last 7 days)
+- Share count
+- Answered prayer count
 
 ## 5 Public Screens + 1 Admin Screen
 
 ### Screen 1: Home (Prayer Queue)
 - 5-10 cards max, no infinite scroll
-- Each card: category tag, short text preview, time left, prayer count, "I prayed" button
+- Each card: category tag, Prayer Points summary (1-2 lines), "View full request" link, time left, prayer count, "I prayed" button
+- Prayer Points are the primary visible text on each card (not the raw post)
+- "View full request" expands to show original poster text
 - No avatars, usernames, likes, comments, trending tabs
 - "Load more" button, not auto-load
 
@@ -84,10 +90,17 @@ id (uuid PK), user_session_id (varchar), type (enum: prayer_received/request_ans
 - Urgency toggle (normal/high)
 - Consent checkbox
 - Auto-block: phone numbers, emails, URLs, hate terms, sexual content
+- **After submit → AI generates Prayer Points + Guided Prayer (single API call)**
+- Poster sees approval screen: "Here are the Prayer Points others will see:" + editable bullet list + preview of Guided Prayer
+- Poster can edit Prayer Points before publishing
+- Approve → request goes live with both original text and Prayer Points
 
 ### Screen 3: Prayer Detail (share link target)
-- Full text, category, prayer count (animates on tap), time remaining
-- Large "I prayed" button
+- Prayer Points displayed prominently at top
+- Full original text visible below (or via "View full request" expand)
+- Category, prayer count (animates after prayer), time remaining
+- Large "I Prayed" button
+- **Tapping "I Prayed" opens Guided Prayer overlay/bottom sheet** — user reads a short AI-generated prayer based on the Prayer Points, then taps "Done ✓" to confirm. Counter increments only after "Done." This is intentional friction — every tap is a real pause.
 - Share button → native share sheet
 - Report button
 - "Post update" (only for original poster)
@@ -112,9 +125,10 @@ Must render server-side. Must work in iMessage, WhatsApp, Instagram stories.
 
 ## Onboarding Flow (first session)
 1. Show headline: "Post a prayer. Get prayed for." + "Pray for someone now" CTA
-2. Show one seeded prayer card → let user tap "I prayed"
+2. Show one seeded prayer card with Prayer Points → user taps "I prayed" → Guided Prayer overlay appears → user reads and taps "Done ✓"
 3. "Need prayer too?" → post form
-4. Confirm: "Your prayer is live."
+4. AI generates Prayer Points → poster approves
+5. Confirm: "Your prayer is live."
 Do NOT start with sign-up wall or feature slideshow.
 
 ## Auto-block Rules
@@ -133,13 +147,13 @@ Phone numbers, email addresses, URLs, hate terms, slurs, sexual content, fundrai
 - Admin can set prayer_count directly on any request via /admin panel
 - For seed requests, set prayer_count to realistic range (3-25)
 - Admin can also create seed prayer_taps with source=seed if needed for data consistency
-- Admin can adjust counts up or down at any time on any request
+- Admin can adjust counts up or down at any time
 
 ### Phasing out
 - Seeds expire naturally through 48h mechanic
 - Stop creating new seeds once organic requests exceed seeded ones
 - Admin dashboard shows seed vs organic ratio
-- Filter seeds from public-facing analytics
+- Filter seeds from public analytics
 
 ## Key Metrics to Track
 - prayer_request_created, prayed_tapped, notification_opened, update_created, answered_marked, request_shared, report_submitted
@@ -164,60 +178,61 @@ Phone numbers, email addresses, URLs, hate terms, slurs, sexual content, fundrai
 - User profiles or following
 - Category-based browsing/tabs (categories for posting only)
 - Public leaderboards or prayer rankings
-- AI-generated prayer responses
+- AI-generated bot REPLIES to prayers (comments, messages, theology lectures)
+- AI replacing human prayer (the pray-er is always a real person)
 - Social feed mechanics (likes, shares, trending)
 - Church management features
 - Content library or devotionals
 
-## Deferred / Out of Scope (do NOT build these in MVP)
-- Screen lock / blocker logic (Phase 2)
-- Private prayer circles (Phase 3)
-- Premium paywall / RevenueCat / subscriptions
-- Email auth (anonymous session tokens only for now)
-- Advanced analytics beyond simple admin dashboard
-- Recommendation or ranking algorithms
-- AI-generated prayer content
-- Localization / i18n
-- Native app packaging (App Store / Play Store)
-- Social features of any kind (following, DMs, comments, profiles)
+## AI Layer: Prayer Points + Guided Prayer
 
-## MVP is Complete When
-- Anonymous user can post a prayer request in under 30 seconds
-- User can tap "I prayed" on any request (once per request per session)
-- Prayer count updates in real time on tap
-- Poster receives notification when someone prays
-- Poster can post an update or mark as answered
-- Share links render correctly with OG metadata (title, description, image)
-- Share link page works as standalone entry point from iMessage/WhatsApp
-- Moderation review queue works (flag, remove, approve)
-- Auto-block rules catch phone numbers, emails, URLs, hate terms
-- Requests expire after 48 hours unless updated
-- Admin can create seed requests with set prayer counts
-- No profiles, comments, or DMs exist anywhere in the app
-- Self-harm keywords trigger resource display, not public posting
+### What AI does in this product
+AI is an **editorial and enablement layer**, not a replacement for human prayer:
+1. **Prayer Points** — summarizes the poster's raw text into clean bullet points (2-4 items) that make it easy for pray-ers to know exactly what to pray for
+2. **Guided Prayer** — generates a short prayer (2-4 sentences) that pray-ers can read/recite when they tap "I Prayed"
 
-## Route Map
-- `/` — Home prayer queue (Screen 1)
-- `/post` — Post prayer request (Screen 2)
-- `/r/[share_slug]` — Prayer detail / share link page (Screen 3, SSR with OG tags)
-- `/update/[id]` — Poster update / answered flow (Screen 4)
-- `/notifications` — Notifications list (Screen 5)
-- `/admin` — Moderator panel (password-protected)
+### What AI does NOT do
+- AI never replies to prayer requests (no bot comments, no theology lectures)
+- AI never replaces the human pray-er (every "I Prayed" is a real person pausing to read and pray)
+- AI content is never shown without poster approval (Prayer Points are editable before publish)
 
-## Permissions Rules
-- Only the original session_id can update or mark their own request as answered
-- One session_id can only tap "I prayed" once per request (enforced by UNIQUE constraint)
-- Only admin (is_admin=true) can edit, remove, or ban other users' content
-- Self-harm flagged posts are hidden from public queue immediately, visible only in admin review
-- Expired requests are hidden from the main queue but remain accessible to the original poster and admin
+### Why this exists
+- Real prayer wall language is often raw, rambling, stream-of-consciousness. Prayer Points normalize quality.
+- 28% of Gen Z say their top spiritual need is "learning how to pray." Guided Prayer removes that friction.
+- PrayerRequest.com's core complaint is bot replies that feel hollow. Our AI helps humans pray better — it doesn't pretend to pray for them.
 
-## Empty State Rules
-- If queue is empty: show seeded content, never show "No prayers yet" with a blank screen
-- If no notifications: show calm empty state with copy like "Nothing yet. We'll let you know when someone prays."
-- If no updates on a request: show gentle prompt "No updates yet"
-- First-time visitor: show onboarding flow (pray for someone first, then invite to post)
+### AI Provider
+- **Primary: Gemini 2.0 Flash-Lite** ($0.075/M input tokens — essentially free at any realistic volume)
+- **Fallback: DeepSeek V3.2** ($0.28/M input — still pennies, OpenAI-compatible API)
+- Single Supabase Edge Function handles both Prayer Points + Guided Prayer in one API call
+- Cost at 10K requests/month: ~$0.30. Cost at 50K: ~$1.50.
+
+### AI Prompt Structure (single call, JSON output)
+Input: raw prayer text + category
+Output (JSON): { prayer_points: string[], guided_prayer: string }
+- Prayer Points: 2-4 bullet points, plain language, no theology jargon, specific to the request
+- Guided Prayer: 2-4 sentences, warm, simple, addresses God directly, references the specific needs, ends with Amen
+- Tone: gentle, plainspoken, non-denominational, no "thee/thou," no performative language
+
+### Poster Approval Flow
+1. Poster writes raw text → submits
+2. Edge Function calls Gemini → returns Prayer Points + Guided Prayer
+3. Poster sees approval screen: Prayer Points (editable) + Guided Prayer preview
+4. Poster taps "Looks good" → request goes live
+5. If AI call fails → request publishes with raw text only, no Prayer Points (graceful fallback)
+
+### Pray-er Flow (Option A — intentional friction)
+1. Pray-er taps "I Prayed" on any card
+2. Bottom sheet / overlay slides up with Guided Prayer text
+3. Pray-er reads the prayer
+4. Taps "Done ✓" → prayer count increments, confirmation shows
+5. This pause is the product. Every tap is a real moment.
+
+### Seed Content
+- Seed requests should also include pre-generated prayer_points and guided_prayer fields
+- Admin can manually edit these in /admin panel
 
 ## Full Reference Docs
 For complete details on competitive landscape, monetization, personas, and strategy, see:
-- prayer-app-FINAL-reference.md (1,131 lines, 32 sections)
+- prayer-app-FINAL-reference.md (1,095 lines, 32 sections)
 - prayer-app-market-research-FINAL.md (698 lines, 19 sections)

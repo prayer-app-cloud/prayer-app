@@ -26,6 +26,8 @@ CREATE TABLE prayer_requests (
   category category_enum[] NOT NULL,
   session_id VARCHAR NOT NULL,
   email VARCHAR,
+  prayer_points TEXT,
+  guided_prayer TEXT,
   prayer_count INTEGER NOT NULL DEFAULT 0,
   share_count INTEGER NOT NULL DEFAULT 0,
   report_count INTEGER NOT NULL DEFAULT 0,

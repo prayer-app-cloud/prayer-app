@@ -42,6 +42,8 @@ export interface PrayerRequest {
   category: CategoryEnum[];
   session_id: string;
   email: string | null;
+  prayer_points: string | null;
+  guided_prayer: string | null;
   prayer_count: number;
   share_count: number;
   report_count: number;
