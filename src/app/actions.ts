@@ -106,16 +106,54 @@ export async function recordPrayerTap(requestId: string): Promise<{
   return { success: true };
 }
 
-// ── Create a new prayer request ─────────────────────────────────
-export async function createPrayerRequest(formData: {
+// ── Step 1: Validate prayer text (no DB insert) ─────────────────
+export async function validatePrayerRequest(formData: {
+  text: string;
+  categories: CategoryEnum[];
+}): Promise<{
+  valid: boolean;
+  selfHarm?: boolean;
+  error?: string;
+}> {
+  const sessionId = await getSessionId();
+  if (!sessionId) {
+    return { valid: false, error: "No session found." };
+  }
+
+  const text = formData.text.trim();
+  const categories = formData.categories;
+
+  if (categories.length < 1 || categories.length > 3) {
+    return { valid: false, error: "Choose between 1 and 3 categories." };
+  }
+
+  if (text.length < 10 || text.length > 500) {
+    return { valid: false, error: "Prayer must be between 10 and 500 characters." };
+  }
+
+  if (containsSelfHarm(text)) {
+    return { valid: false, selfHarm: true };
+  }
+
+  const filterResult = filterContent(text);
+  if (!filterResult.ok) {
+    return { valid: false, error: filterResult.reason };
+  }
+
+  return { valid: true };
+}
+
+// ── Step 2: Publish prayer with optional AI-generated content ───
+export async function publishPrayerRequest(formData: {
   text: string;
   categories: CategoryEnum[];
   anonymous: boolean;
   urgency: UrgencyEnum;
+  prayerPoints: string[] | null;
+  guidedPrayer: string | null;
 }): Promise<{
   success: boolean;
   shareSlug?: string;
-  selfHarm?: boolean;
   error?: string;
 }> {
   const sessionId = await getSessionId();
@@ -123,44 +161,26 @@ export async function createPrayerRequest(formData: {
     return { success: false, error: "No session found." };
   }
 
-  const text = formData.text.trim();
-  const categories = formData.categories;
-
-  if (categories.length < 1 || categories.length > 3) {
-    return { success: false, error: "Choose between 1 and 3 categories." };
-  }
-
-  if (text.length < 10 || text.length > 500) {
-    return { success: false, error: "Prayer must be between 10 and 500 characters." };
-  }
-
-  // Self-harm check — don't post, show resources
-  if (containsSelfHarm(text)) {
-    return { success: false, selfHarm: true };
-  }
-
-  // Content filter
-  const filterResult = filterContent(text);
-  if (!filterResult.ok) {
-    return { success: false, error: filterResult.reason };
-  }
-
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("prayer_requests")
     .insert({
-      text,
-      category: categories,
+      text: formData.text.trim(),
+      category: formData.categories,
       session_id: sessionId,
       anonymous: formData.anonymous,
       urgency: formData.urgency,
+      prayer_points: formData.prayerPoints
+        ? JSON.stringify(formData.prayerPoints)
+        : null,
+      guided_prayer: formData.guidedPrayer ?? null,
     })
     .select("share_slug")
     .single();
 
   if (error) {
-    console.error("createPrayerRequest error:", error);
+    console.error("publishPrayerRequest error:", error);
     return { success: false, error: "Something went wrong. Please try again." };
   }
 

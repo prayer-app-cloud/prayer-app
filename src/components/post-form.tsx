@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createPrayerRequest } from "@/app/actions";
+import { validatePrayerRequest, publishPrayerRequest } from "@/app/actions";
 import type { CategoryEnum, UrgencyEnum } from "@/lib/types/database";
 
 const CATEGORIES: { value: CategoryEnum; label: string }[] = [
@@ -19,17 +19,31 @@ const CATEGORIES: { value: CategoryEnum; label: string }[] = [
 const MIN_LENGTH = 10;
 const MAX_LENGTH = 500;
 
+type Step = "form" | "approval" | "success";
+
 export function PostForm() {
   const router = useRouter();
+
+  // Form state
   const [text, setText] = useState("");
   const [categories, setCategories] = useState<CategoryEnum[]>([]);
   const [anonymous, setAnonymous] = useState(true);
   const [urgency, setUrgency] = useState<UrgencyEnum>("normal");
   const [consent, setConsent] = useState(false);
+
+  // Flow state
+  const [step, setStep] = useState<Step>("form");
   const [error, setError] = useState<string | null>(null);
   const [selfHarm, setSelfHarm] = useState(false);
-  const [successSlug, setSuccessSlug] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // AI-generated content (editable)
+  const [prayerPoints, setPrayerPoints] = useState<string[]>([]);
+  const [guidedPrayer, setGuidedPrayer] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // Success state
+  const [successSlug, setSuccessSlug] = useState<string | null>(null);
 
   const charCount = text.length;
   const canSubmit =
@@ -40,36 +54,97 @@ export function PostForm() {
     consent &&
     !isPending;
 
+  // ── Step 1: Validate and call AI ─────────────────────────────
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit || categories.length === 0) return;
+    if (!canSubmit) return;
 
     setError(null);
     setSelfHarm(false);
 
     startTransition(async () => {
-      const result = await createPrayerRequest({
+      // Server-side validation
+      const validation = await validatePrayerRequest({
         text,
         categories,
-        anonymous,
-        urgency,
       });
 
-      if (result.selfHarm) {
+      if (validation.selfHarm) {
         setSelfHarm(true);
         return;
       }
 
+      if (!validation.valid) {
+        setError(validation.error ?? "Something went wrong.");
+        return;
+      }
+
+      // Call AI endpoint
+      setAiLoading(true);
+      try {
+        const res = await fetch("/api/generate-prayer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            category: categories[0],
+          }),
+        });
+
+        const aiData = await res.json();
+
+        if (aiData && aiData.prayer_points && aiData.guided_prayer) {
+          setPrayerPoints(aiData.prayer_points);
+          setGuidedPrayer(aiData.guided_prayer);
+        } else {
+          // AI failed — will publish without Prayer Points
+          setPrayerPoints([]);
+          setGuidedPrayer(null);
+        }
+      } catch {
+        // AI failed gracefully
+        setPrayerPoints([]);
+        setGuidedPrayer(null);
+      }
+      setAiLoading(false);
+      setStep("approval");
+    });
+  }
+
+  // ── Step 2: Publish with approved content ────────────────────
+  function handlePublish() {
+    startTransition(async () => {
+      const result = await publishPrayerRequest({
+        text,
+        categories,
+        anonymous,
+        urgency,
+        prayerPoints: prayerPoints.length > 0 ? prayerPoints : null,
+        guidedPrayer,
+      });
+
       if (!result.success) {
         setError(result.error ?? "Something went wrong.");
+        setStep("form");
         return;
       }
 
       setSuccessSlug(result.shareSlug ?? null);
+      setStep("success");
     });
   }
 
-  if (successSlug) {
+  // ── Edit a prayer point ──────────────────────────────────────
+  function updatePoint(index: number, value: string) {
+    setPrayerPoints((prev) => prev.map((p, i) => (i === index ? value : p)));
+  }
+
+  function removePoint(index: number) {
+    setPrayerPoints((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  // ── Success screen ───────────────────────────────────────────
+  if (step === "success") {
     return (
       <div className="text-center py-12">
         <div className="text-4xl mb-4">🕊️</div>
@@ -97,6 +172,91 @@ export function PostForm() {
     );
   }
 
+  // ── Approval screen ──────────────────────────────────────────
+  if (step === "approval") {
+    return (
+      <div className="space-y-6">
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {prayerPoints.length > 0 ? (
+          <>
+            <div>
+              <h2 className="text-sm font-medium text-gray-700 mb-1">
+                Prayer Points others will see
+              </h2>
+              <p className="text-xs text-warm-gray-light mb-3">
+                Edit or remove any that don't feel right.
+              </p>
+              <div className="space-y-2">
+                {prayerPoints.map((point, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="text-amber-500 text-sm">•</span>
+                    <input
+                      type="text"
+                      value={point}
+                      onChange={(e) => updatePoint(i, e.target.value)}
+                      className="flex-1 text-sm text-gray-800 bg-white border border-cream-dark rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePoint(i)}
+                      className="text-warm-gray-light hover:text-red-400 text-sm px-1"
+                      aria-label="Remove point"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {guidedPrayer && (
+              <div>
+                <h2 className="text-sm font-medium text-gray-700 mb-1">
+                  Guided Prayer preview
+                </h2>
+                <p className="text-xs text-warm-gray-light mb-3">
+                  This is what someone will read when they pray for you.
+                </p>
+                <div className="bg-amber-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed italic">
+                  {guidedPrayer}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+            Prayer Points couldn't be generated. Your prayer will be
+            published with the original text.
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setStep("form")}
+            className="flex-1 py-3 rounded-full text-sm font-medium bg-cream-dark text-gray-700 hover:bg-amber-50 transition-colors"
+          >
+            Go back
+          </button>
+          <button
+            type="button"
+            onClick={handlePublish}
+            disabled={isPending}
+            className="flex-1 py-3 rounded-full text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-40 active:scale-[0.98]"
+          >
+            {isPending ? "Publishing…" : "Looks good"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Form screen ──────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Self-harm resources */}
@@ -139,11 +299,7 @@ export function PostForm() {
         <div className="flex justify-end mt-1">
           <span
             className={`text-xs tabular-nums ${
-              charCount > MAX_LENGTH
-                ? "text-red-500"
-                : charCount >= MIN_LENGTH
-                  ? "text-warm-gray-light"
-                  : "text-warm-gray-light"
+              charCount > MAX_LENGTH ? "text-red-500" : "text-warm-gray-light"
             }`}
           >
             {charCount}/{MAX_LENGTH}
@@ -191,7 +347,6 @@ export function PostForm() {
 
       {/* Toggles */}
       <div className="space-y-3">
-        {/* Anonymous toggle */}
         <label className="flex items-center justify-between cursor-pointer">
           <span className="text-sm text-gray-700">Post anonymously</span>
           <button
@@ -213,7 +368,6 @@ export function PostForm() {
           </button>
         </label>
 
-        {/* Urgency toggle */}
         <label className="flex items-center justify-between cursor-pointer">
           <span className="text-sm text-gray-700">Urgent request</span>
           <button
@@ -258,7 +412,11 @@ export function PostForm() {
         disabled={!canSubmit}
         className="w-full py-3 rounded-full text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
       >
-        {isPending ? "Posting…" : "Post prayer"}
+        {isPending
+          ? aiLoading
+            ? "Generating prayer points…"
+            : "Checking…"
+          : "Post prayer"}
       </button>
     </form>
   );
