@@ -109,7 +109,7 @@ export async function recordPrayerTap(requestId: string): Promise<{
 // ── Create a new prayer request ─────────────────────────────────
 export async function createPrayerRequest(formData: {
   text: string;
-  category: CategoryEnum;
+  categories: CategoryEnum[];
   anonymous: boolean;
   urgency: UrgencyEnum;
 }): Promise<{
@@ -124,6 +124,11 @@ export async function createPrayerRequest(formData: {
   }
 
   const text = formData.text.trim();
+  const categories = formData.categories;
+
+  if (categories.length < 1 || categories.length > 3) {
+    return { success: false, error: "Choose between 1 and 3 categories." };
+  }
 
   if (text.length < 10 || text.length > 500) {
     return { success: false, error: "Prayer must be between 10 and 500 characters." };
@@ -146,7 +151,7 @@ export async function createPrayerRequest(formData: {
     .from("prayer_requests")
     .insert({
       text,
-      category: formData.category,
+      category: categories,
       session_id: sessionId,
       anonymous: formData.anonymous,
       urgency: formData.urgency,

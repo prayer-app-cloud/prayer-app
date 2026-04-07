@@ -23,7 +23,7 @@ CREATE TABLE users (
 CREATE TABLE prayer_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   text VARCHAR(500) NOT NULL,
-  category category_enum NOT NULL,
+  category category_enum[] NOT NULL,
   session_id VARCHAR NOT NULL,
   email VARCHAR,
   prayer_count INTEGER NOT NULL DEFAULT 0,

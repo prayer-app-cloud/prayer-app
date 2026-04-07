@@ -39,7 +39,7 @@ export type NotificationTypeEnum =
 export interface PrayerRequest {
   id: string;
   text: string;
-  category: CategoryEnum;
+  category: CategoryEnum[];
   session_id: string;
   email: string | null;
   prayer_count: number;

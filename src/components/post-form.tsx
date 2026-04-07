@@ -22,7 +22,7 @@ const MAX_LENGTH = 500;
 export function PostForm() {
   const router = useRouter();
   const [text, setText] = useState("");
-  const [category, setCategory] = useState<CategoryEnum | null>(null);
+  const [categories, setCategories] = useState<CategoryEnum[]>([]);
   const [anonymous, setAnonymous] = useState(true);
   const [urgency, setUrgency] = useState<UrgencyEnum>("normal");
   const [consent, setConsent] = useState(false);
@@ -35,13 +35,14 @@ export function PostForm() {
   const canSubmit =
     charCount >= MIN_LENGTH &&
     charCount <= MAX_LENGTH &&
-    category !== null &&
+    categories.length >= 1 &&
+    categories.length <= 3 &&
     consent &&
     !isPending;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit || !category) return;
+    if (!canSubmit || categories.length === 0) return;
 
     setError(null);
     setSelfHarm(false);
@@ -49,7 +50,7 @@ export function PostForm() {
     startTransition(async () => {
       const result = await createPrayerRequest({
         text,
-        category,
+        categories,
         anonymous,
         urgency,
       });
@@ -150,27 +151,41 @@ export function PostForm() {
         </div>
       </div>
 
-      {/* Category pills */}
+      {/* Category pills (1-3) */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-2">Category</p>
+        <p className="text-sm font-medium text-gray-700 mb-1">Category</p>
+        <p className="text-xs text-warm-gray-light mb-2">Choose up to 3</p>
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              type="button"
-              onClick={() => setCategory(cat.value)}
-              className={`
-                px-3 py-1.5 rounded-full text-sm font-medium transition-colors
-                ${
-                  category === cat.value
-                    ? "bg-amber-500 text-white"
-                    : "bg-cream-dark text-gray-600 hover:bg-amber-50 hover:text-amber-700"
+          {CATEGORIES.map((cat) => {
+            const selected = categories.includes(cat.value);
+            const atMax = categories.length >= 3 && !selected;
+            return (
+              <button
+                key={cat.value}
+                type="button"
+                disabled={atMax}
+                onClick={() =>
+                  setCategories((prev) =>
+                    selected
+                      ? prev.filter((c) => c !== cat.value)
+                      : [...prev, cat.value]
+                  )
                 }
-              `}
-            >
-              {cat.label}
-            </button>
-          ))}
+                className={`
+                  px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                  ${
+                    selected
+                      ? "bg-amber-500 text-white"
+                      : atMax
+                        ? "bg-cream-dark text-gray-400 cursor-not-allowed"
+                        : "bg-cream-dark text-gray-600 hover:bg-amber-50 hover:text-amber-700"
+                  }
+                `}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

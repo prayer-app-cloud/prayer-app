@@ -66,10 +66,17 @@ export function PrayerCard({
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-cream-dark">
       <div className="flex items-center justify-between mb-3">
-        <span className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-600">
-          {CATEGORY_LABELS[prayer.category] ?? prayer.category}
-        </span>
-        <span className="text-xs text-warm-gray-light">
+        <div className="flex flex-wrap gap-1.5">
+          {prayer.category.map((cat) => (
+            <span
+              key={cat}
+              className="inline-block text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-600"
+            >
+              {CATEGORY_LABELS[cat] ?? cat}
+            </span>
+          ))}
+        </div>
+        <span className="text-xs text-warm-gray-light shrink-0 ml-2">
           {timeLeft(prayer.expires_at)}
         </span>
       </div>
