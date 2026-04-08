@@ -54,6 +54,7 @@ export interface PrayerRequest {
   expires_at: string;
   share_slug: string;
   is_seed: boolean;
+  display_name_snapshot: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -85,6 +86,7 @@ export interface User {
   trust_score: number;
   strike_count: number;
   is_admin: boolean;
+  display_name: string | null;
   created_at: string;
 }
 

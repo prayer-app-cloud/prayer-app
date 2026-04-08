@@ -39,14 +39,15 @@ export default async function Home() {
   }
 
   return (
-    <main className="flex flex-col min-h-screen max-w-lg mx-auto px-4 py-6">
-      {/* Warm header area */}
-      <header className="mb-8 text-center">
-        <h1 className="font-serif text-2xl font-semibold text-gray-800 mb-1">
+    <main className="flex flex-col min-h-screen max-w-lg mx-auto px-4 pt-6 pb-20">
+      {/* Header with subtle radial warmth */}
+      <header className="mb-8 text-center relative">
+        <div className="absolute inset-0 -top-6 bg-[radial-gradient(ellipse_at_center,_rgba(251,191,36,0.06)_0%,_transparent_70%)] pointer-events-none" />
+        <h1 className="font-serif text-2xl font-semibold text-gray-800 mb-1 relative">
           Prayer Room
         </h1>
-        <p className="text-sm text-warm-gray">
-          A quiet place to share prayer and pray for others
+        <p className="text-sm text-warm-gray relative">
+          You are heard here
         </p>
       </header>
 
@@ -57,14 +58,16 @@ export default async function Home() {
         initialHasMore={hasMore}
       />
 
-      {/* Post CTA */}
-      <div className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none">
-        <Link
-          href="/post"
-          className="pointer-events-auto px-6 py-3 bg-amber-400 hover:bg-amber-500 text-amber-900 font-medium rounded-full shadow-lg shadow-amber-200/50 transition-colors active:scale-95"
-        >
-          Share a prayer request
-        </Link>
+      {/* Sticky bottom bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-cream/90 backdrop-blur-sm border-t border-stone-200/60 py-3 px-4">
+        <div className="max-w-lg mx-auto flex justify-center">
+          <Link
+            href="/post"
+            className="px-6 py-2.5 bg-amber-400 hover:bg-amber-500 text-amber-900 text-sm font-medium rounded-full shadow-sm transition-colors active:scale-95"
+          >
+            Share a prayer request
+          </Link>
+        </div>
       </div>
     </main>
   );

@@ -54,9 +54,11 @@ const TEXT_PREVIEW_LENGTH = 150;
 export function PrayerCard({
   prayer,
   initialPrayed,
+  expandBullets = false,
 }: {
   prayer: PrayerRequest;
   initialPrayed: boolean;
+  expandBullets?: boolean;
 }) {
   const [prayed, setPrayed] = useState(initialPrayed);
   const [count, setCount] = useState(prayer.prayer_count);
@@ -64,6 +66,7 @@ export function PrayerCard({
   const [loading, setLoading] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
+  const [showAllBullets, setShowAllBullets] = useState(expandBullets);
   const [thankYouVisible, setThankYouVisible] = useState(false);
 
   const prayerPoints = parsePrayerPoints(prayer.prayer_points);
@@ -79,6 +82,16 @@ export function PrayerCard({
   const textPreview = textIsTruncated
     ? prayer.text.slice(0, TEXT_PREVIEW_LENGTH) + "..."
     : prayer.text;
+
+  // Chip display: max 2 visible + overflow count
+  const visibleChips = prayer.category.slice(0, 2);
+  const overflowCount = prayer.category.length - 2;
+
+  // Bullets: collapsed on home (show 1 + "and X more"), expanded on detail
+  const visibleBullets = showAllBullets ? prayerPoints : prayerPoints.slice(0, 1);
+  const hiddenBulletCount = prayerPoints.length - 1;
+
+  const displayName = prayer.display_name_snapshot ?? (prayer.anonymous ? "Anonymous" : null);
 
   function handlePrayClick() {
     if (prayed || loading) return;
@@ -112,47 +125,53 @@ export function PrayerCard({
 
   return (
     <>
-      <div
-        className={`bg-white/80 backdrop-blur-sm rounded-2xl p-7 shadow-sm border-l-[3px] ${
-          isUrgent ? "border-l-amber-400" : primaryStyle.borderColor
-        }`}
-      >
-        {/* Category tags + time + urgent badge */}
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+        {/* Category chips + time */}
+        <div className="flex items-center justify-between mb-3">
           <div className="flex flex-wrap gap-1.5 items-center">
             {isUrgent && (
               <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wide">
                 Urgent
               </span>
             )}
-            {prayer.category.map((cat) => {
+            {visibleChips.map((cat) => {
               const style = getCategoryStyle(cat);
               const Icon = CATEGORY_ICONS[cat] ?? Sparkle;
               return (
                 <span
                   key={cat}
-                  className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${style.chipBg} ${style.chipText}`}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600"
                 >
-                  <Icon size={14} weight="thin" />
+                  <Icon size={13} weight="thin" className={style.chipText} />
                   {style.label}
                 </span>
               );
             })}
+            {overflowCount > 0 && (
+              <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-stone-100 text-stone-400">
+                +{overflowCount}
+              </span>
+            )}
           </div>
-          <span className="text-xs text-warm-gray-light shrink-0 ml-2">
+          <span className="text-[11px] text-stone-400 shrink-0 ml-2">
             {timeLeft(prayer.expires_at)}
           </span>
         </div>
 
-        {/* Prayer text — the human story */}
+        {/* Display name */}
+        {displayName && (
+          <p className="text-xs text-stone-400 mb-1">{displayName}</p>
+        )}
+
+        {/* Prayer text — the hero */}
         <div className="mb-3">
           {showFullText ? (
-            <p className="text-base text-gray-800 leading-relaxed">
+            <p className="text-base font-medium text-gray-800 leading-relaxed">
               {prayer.text}
             </p>
           ) : (
             <>
-              <p className="text-base text-gray-800 leading-relaxed">
+              <p className="text-base font-medium text-gray-800 leading-relaxed">
                 {textPreview}
               </p>
               {textIsTruncated && (
@@ -167,32 +186,37 @@ export function PrayerCard({
           )}
         </div>
 
-        {/* Divider + "What to pray for" section */}
+        {/* "What to pray for" — collapsed on feed, expanded on detail */}
         {prayerPoints.length > 0 && (
-          <>
-            <div className="border-t border-stone-200/50 my-4" />
-            <div className={`mb-4 ${primaryStyle.tintBg} rounded-xl px-4 py-3`}>
-              <p className={`font-serif text-xs font-medium ${primaryStyle.chipText} mb-2 flex items-center gap-1.5`}>
-                <HandsPraying size={13} weight="thin" />
-                What to pray for
-              </p>
-              <ul className="space-y-1">
-                {prayerPoints.map((point, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-sm text-gray-700 leading-snug"
-                  >
-                    <span className={`${primaryStyle.bulletColor} mt-0.5 shrink-0`}>•</span>
-                    {point}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
+          <div className="mb-3 mt-4">
+            <p className="font-serif text-xs text-stone-500 mb-1.5 flex items-center gap-1">
+              <HandsPraying size={12} weight="thin" />
+              What to pray for
+            </p>
+            <ul className="space-y-0.5">
+              {visibleBullets.map((point, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-gray-600 leading-snug"
+                >
+                  <span className="text-stone-300 mt-0.5 shrink-0">•</span>
+                  {point}
+                </li>
+              ))}
+            </ul>
+            {!showAllBullets && hiddenBulletCount > 0 && (
+              <button
+                onClick={() => setShowAllBullets(true)}
+                className="text-xs text-amber-600 hover:text-amber-700 mt-1"
+              >
+                and {hiddenBulletCount} more
+              </button>
+            )}
+          </div>
         )}
 
         {/* Divider before action row */}
-        <div className="border-t border-stone-200/50 my-4" />
+        <div className="border-t border-stone-200/50 my-3" />
 
         {/* I Prayed button + count */}
         <div className="flex items-center justify-between">
@@ -204,20 +228,20 @@ export function PrayerCard({
               transition-all duration-200
               ${
                 prayed
-                  ? "bg-amber-100/80 text-amber-700 cursor-default"
-                  : `${primaryStyle.tintBg} ${primaryStyle.chipText} hover:opacity-80 active:scale-95 border border-stone-200/60`
+                  ? "bg-stone-100 text-stone-400 cursor-default"
+                  : "bg-stone-100 text-stone-600 hover:bg-stone-200 active:scale-95"
               }
             `}
           >
             <HandsPraying size={18} weight={prayed ? "duotone" : "thin"} />
-            {prayed ? "Prayed" : "I Prayed"}
+            {prayed ? "Prayed \u2713" : "I Prayed"}
           </button>
 
           <span
             className={`
-              text-sm font-medium tabular-nums rounded-full px-2 py-0.5
+              text-xs tabular-nums rounded-full px-2 py-0.5
               transition-all duration-300
-              ${animating ? "text-amber-500 scale-110 animate-count-pulse" : "text-warm-gray"}
+              ${animating ? "text-amber-500 scale-110 animate-count-pulse" : "text-stone-400"}
             `}
           >
             {count} {count === 1 ? "prayer" : "prayers"}
@@ -226,11 +250,11 @@ export function PrayerCard({
 
         {/* Thank you message + verse */}
         {thankYouVisible && (
-          <div className="mt-4 text-center animate-fade-out">
+          <div className="mt-3 text-center animate-fade-out">
             <p className="text-xs text-amber-600">
               Thank you for praying. They are not alone.
             </p>
-            <p className="font-serif text-[11px] text-warm-gray italic mt-2 leading-relaxed">
+            <p className="font-serif text-[11px] text-stone-400 italic mt-1.5 leading-relaxed">
               &ldquo;{verse.text}&rdquo; — {verse.reference}
             </p>
           </div>

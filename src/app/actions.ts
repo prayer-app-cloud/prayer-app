@@ -151,6 +151,7 @@ export async function publishPrayerRequest(formData: {
   urgency: UrgencyEnum;
   prayerPoints: string[] | null;
   guidedPrayer: string | null;
+  displayNameSnapshot: string | null;
 }): Promise<{
   success: boolean;
   shareSlug?: string;
@@ -175,6 +176,7 @@ export async function publishPrayerRequest(formData: {
         ? JSON.stringify(formData.prayerPoints)
         : null,
       guided_prayer: formData.guidedPrayer ?? null,
+      display_name_snapshot: formData.anonymous ? null : formData.displayNameSnapshot,
     })
     .select("share_slug")
     .single();

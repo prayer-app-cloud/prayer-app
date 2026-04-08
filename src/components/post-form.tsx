@@ -44,12 +44,12 @@ const MAX_LENGTH = 500;
 
 type Step = "form" | "approval" | "success";
 
-export function PostForm() {
+export function PostForm({ displayName }: { displayName: string | null }) {
   const router = useRouter();
 
   const [text, setText] = useState("");
   const [categories, setCategories] = useState<CategoryEnum[]>([]);
-  const [anonymous, setAnonymous] = useState(true);
+  const [anonymous, setAnonymous] = useState(false);
   const [urgency, setUrgency] = useState<UrgencyEnum>("normal");
   const [consent, setConsent] = useState(false);
 
@@ -128,6 +128,7 @@ export function PostForm() {
         urgency,
         prayerPoints: prayerPoints.length > 0 ? prayerPoints : null,
         guidedPrayer,
+        displayNameSnapshot: anonymous ? null : displayName,
       });
 
       if (!result.success) {
@@ -162,7 +163,7 @@ export function PostForm() {
         <p className="text-sm text-warm-gray mb-1">
           Your request is now live. Others can begin praying for you.
         </p>
-        <p className="text-xs text-warm-gray-light mb-8">
+        <p className="text-xs text-stone-400 mb-8">
           You&apos;re not carrying this alone.
         </p>
         <div className="flex flex-col gap-3">
@@ -174,7 +175,7 @@ export function PostForm() {
           </button>
           <button
             onClick={() => router.push("/")}
-            className="px-6 py-2.5 rounded-full text-sm font-medium bg-cream-dark text-gray-700 hover:bg-amber-50 transition-colors"
+            className="px-6 py-2.5 rounded-full text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
           >
             Back to Prayer Room
           </button>
@@ -199,23 +200,23 @@ export function PostForm() {
               <h2 className="font-serif text-base text-gray-700 mb-1">
                 What to pray for
               </h2>
-              <p className="text-xs text-warm-gray-light mb-3">
+              <p className="text-xs text-stone-400 mb-3">
                 Make sure this feels true to you.
               </p>
               <div className="space-y-2">
                 {prayerPoints.map((point, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <span className="text-amber-500 text-sm">•</span>
+                    <span className="text-stone-300 text-sm">•</span>
                     <input
                       type="text"
                       value={point}
                       onChange={(e) => updatePoint(i, e.target.value)}
-                      className="flex-1 text-sm text-gray-800 bg-white border border-cream-dark rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                      className="flex-1 text-sm text-gray-800 bg-white border border-stone-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
                     />
                     <button
                       type="button"
                       onClick={() => removePoint(i)}
-                      className="text-warm-gray-light hover:text-red-400 text-sm px-1"
+                      className="text-stone-400 hover:text-red-400 text-sm px-1"
                       aria-label="Remove point"
                     >
                       ✕
@@ -230,7 +231,7 @@ export function PostForm() {
                 <h2 className="font-serif text-base text-gray-700 mb-1">
                   Words to Pray
                 </h2>
-                <p className="text-xs text-warm-gray-light mb-3">
+                <p className="text-xs text-stone-400 mb-3">
                   This is what someone will read when they pray for you.
                 </p>
                 <div className="bg-amber-50/40 rounded-xl p-5 text-sm text-gray-700 leading-relaxed font-serif italic">
@@ -250,7 +251,7 @@ export function PostForm() {
           <button
             type="button"
             onClick={() => setStep("form")}
-            className="flex-1 py-3 rounded-full text-sm font-medium bg-cream-dark text-gray-700 hover:bg-amber-50 transition-colors"
+            className="flex-1 py-3 rounded-full text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
           >
             Go back
           </button>
@@ -303,12 +304,12 @@ export function PostForm() {
           placeholder="What would you like prayer for?"
           maxLength={MAX_LENGTH}
           rows={5}
-          className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm text-gray-800 placeholder:text-warm-gray-light focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent resize-none"
+          className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-gray-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent resize-none"
         />
         <div className="flex justify-end mt-1">
           <span
             className={`text-xs tabular-nums ${
-              charCount > MAX_LENGTH ? "text-red-500" : "text-warm-gray-light"
+              charCount > MAX_LENGTH ? "text-red-500" : "text-stone-400"
             }`}
           >
             {charCount}/{MAX_LENGTH}
@@ -319,7 +320,7 @@ export function PostForm() {
       {/* Category pills */}
       <div>
         <p className="text-sm font-medium text-gray-700 mb-1">Choose 1–3 areas</p>
-        <p className="text-xs text-warm-gray-light mb-2">What best describes this prayer?</p>
+        <p className="text-xs text-stone-400 mb-2">What best describes this prayer?</p>
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((cat) => {
             const selected = categories.includes(cat.value);
@@ -342,14 +343,14 @@ export function PostForm() {
                   inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors
                   ${
                     selected
-                      ? `${style.chipBg} ${style.chipText} shadow-sm ring-1 ring-current/20`
+                      ? `bg-stone-100 text-stone-700 shadow-sm ring-1 ring-stone-300`
                       : atMax
-                        ? "bg-cream-dark text-gray-400 cursor-not-allowed"
-                        : "bg-cream-dark text-gray-600 hover:bg-stone-100 hover:text-gray-700"
+                        ? "bg-stone-50 text-stone-300 cursor-not-allowed"
+                        : "bg-stone-50 text-stone-500 hover:bg-stone-100 hover:text-stone-600"
                   }
                 `}
               >
-                <Icon size={18} weight={selected ? "duotone" : "thin"} />
+                <Icon size={18} weight={selected ? "duotone" : "thin"} className={selected ? style.chipText : ""} />
                 {cat.label}
               </button>
             );
@@ -357,28 +358,32 @@ export function PostForm() {
         </div>
       </div>
 
-      {/* Toggles */}
+      {/* Identity toggle */}
       <div className="space-y-3">
-        <label className="flex items-center justify-between cursor-pointer">
-          <span className="text-sm text-gray-700">Post anonymously</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={anonymous}
-            onClick={() => setAnonymous(!anonymous)}
-            className={`
-              relative w-10 h-6 rounded-full transition-colors
-              ${anonymous ? "bg-amber-500" : "bg-cream-dark"}
-            `}
-          >
-            <span
+        {displayName && (
+          <label className="flex items-center justify-between cursor-pointer">
+            <span className="text-sm text-gray-700">
+              {anonymous ? "Post as Anonymous" : `Post as ${displayName}`}
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!anonymous}
+              onClick={() => setAnonymous(!anonymous)}
               className={`
-                absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform
-                ${anonymous ? "translate-x-4" : "translate-x-0"}
+                relative w-10 h-6 rounded-full transition-colors
+                ${!anonymous ? "bg-amber-500" : "bg-stone-200"}
               `}
-            />
-          </button>
-        </label>
+            >
+              <span
+                className={`
+                  absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform
+                  ${!anonymous ? "translate-x-4" : "translate-x-0"}
+                `}
+              />
+            </button>
+          </label>
+        )}
 
         <label className="flex items-center justify-between cursor-pointer">
           <span className="text-sm text-gray-700">Urgent request</span>
@@ -391,7 +396,7 @@ export function PostForm() {
             }
             className={`
               relative w-10 h-6 rounded-full transition-colors
-              ${urgency === "high" ? "bg-amber-500" : "bg-cream-dark"}
+              ${urgency === "high" ? "bg-amber-500" : "bg-stone-200"}
             `}
           >
             <span
@@ -412,7 +417,7 @@ export function PostForm() {
           onChange={(e) => setConsent(e.target.checked)}
           className="mt-0.5 h-4 w-4 rounded border-gray-300 text-amber-500 focus:ring-amber-300"
         />
-        <span className="text-xs text-warm-gray leading-relaxed">
+        <span className="text-xs text-stone-500 leading-relaxed">
           I understand this prayer will be shared anonymously with others who
           want to pray. No personal information will be displayed.
         </span>

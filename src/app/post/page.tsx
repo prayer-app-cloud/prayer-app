@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { PostForm } from "@/components/post-form";
+import { getDisplayName } from "@/lib/session";
 
-export default function PostPrayer() {
+export default async function PostPrayer() {
+  const displayName = await getDisplayName();
+
   return (
     <main className="flex flex-col min-h-screen max-w-lg mx-auto px-4 py-6">
       <header className="mb-6">
@@ -19,7 +22,7 @@ export default function PostPrayer() {
         </p>
       </header>
 
-      <PostForm />
+      <PostForm displayName={displayName} />
     </main>
   );
 }
