@@ -20,7 +20,7 @@ Respond ONLY with valid JSON, no markdown, no preamble:
 {"prayer_points": ["point 1", "point 2", "point 3"], "guided_prayer": "Lord, ..."}`;
 
 const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
         },
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 250,
+          maxOutputTokens: 1024,
+          thinkingConfig: { thinkingBudget: 0 },
           responseMimeType: "application/json",
         },
       }),
