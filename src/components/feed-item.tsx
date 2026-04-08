@@ -13,6 +13,10 @@ function timeLeft(expiresAt: string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) return "Expired";
   const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours > 24) {
+    const days = Math.min(Math.floor(hours / 24), 7);
+    return `${days}d left`;
+  }
   if (hours >= 1) return `${hours}h left`;
   const minutes = Math.floor(diff / (1000 * 60));
   return `${minutes}m left`;
