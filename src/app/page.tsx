@@ -40,13 +40,17 @@ export default async function Home() {
 
   return (
     <main className="flex flex-col min-h-screen max-w-lg mx-auto px-4 py-6">
-      {/* Header */}
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">
-          Post a prayer. Get prayed for.
-        </h1>
-        <p className="text-sm text-warm-gray mt-1">
-          Pray for someone, or share what you need prayer for.
+      {/* Warm header area */}
+      <header className="mb-8 text-center">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-amber-400 text-lg">✦</span>
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Prayer Room
+          </h1>
+          <span className="text-amber-400 text-lg">✦</span>
+        </div>
+        <p className="text-sm text-warm-gray">
+          A quiet place to share prayer and pray for others
         </p>
       </header>
 
@@ -61,9 +65,9 @@ export default async function Home() {
       <div className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none">
         <Link
           href="/post"
-          className="pointer-events-auto px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-full shadow-lg transition-colors active:scale-95"
+          className="pointer-events-auto px-6 py-3 bg-amber-400 hover:bg-amber-500 text-amber-900 font-medium rounded-full shadow-lg shadow-amber-200/50 transition-colors active:scale-95"
         >
-          Need prayer?
+          Share a prayer request
         </Link>
       </div>
     </main>

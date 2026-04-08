@@ -50,10 +50,10 @@ export function GuidedPrayerSheet({
 
         {/* Header */}
         <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-2">
-          Guided Prayer
+          Pause and pray
         </p>
         <p className="text-xs text-warm-gray-light mb-5">
-          Take a moment. Read this prayer silently or aloud.
+          Words to pray
         </p>
 
         {/* Prayer text */}

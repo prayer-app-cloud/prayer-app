@@ -149,23 +149,26 @@ export function PostForm() {
       <div className="text-center py-12">
         <div className="text-4xl mb-4">🕊️</div>
         <h2 className="text-lg font-semibold text-gray-800 mb-2">
-          Your prayer is live.
+          You are heard
         </h2>
-        <p className="text-sm text-warm-gray mb-6">
-          We'll let you know when someone prays.
+        <p className="text-sm text-warm-gray mb-1">
+          Your request is now live. Others can begin praying for you.
+        </p>
+        <p className="text-xs text-warm-gray-light mb-6">
+          You&apos;re not carrying this alone.
         </p>
         <div className="flex flex-col gap-3">
           <button
             onClick={() => router.push(`/r/${successSlug}`)}
             className="px-6 py-2.5 rounded-full text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors"
           >
-            View your prayer
+            View my request
           </button>
           <button
             onClick={() => router.push("/")}
             className="px-6 py-2.5 rounded-full text-sm font-medium bg-cream-dark text-gray-700 hover:bg-amber-50 transition-colors"
           >
-            Pray for others
+            Back to Prayer Room
           </button>
         </div>
       </div>
@@ -186,10 +189,10 @@ export function PostForm() {
           <>
             <div>
               <h2 className="text-sm font-medium text-gray-700 mb-1">
-                Prayer Points others will see
+                How others can pray
               </h2>
               <p className="text-xs text-warm-gray-light mb-3">
-                Edit or remove any that don't feel right.
+                Make sure this feels true to you.
               </p>
               <div className="space-y-2">
                 {prayerPoints.map((point, i) => (
@@ -217,7 +220,7 @@ export function PostForm() {
             {guidedPrayer && (
               <div>
                 <h2 className="text-sm font-medium text-gray-700 mb-1">
-                  Guided Prayer preview
+                  Words to Pray
                 </h2>
                 <p className="text-xs text-warm-gray-light mb-3">
                   This is what someone will read when they pray for you.
@@ -291,7 +294,7 @@ export function PostForm() {
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="What do you need prayer for?"
+          placeholder="What would you like prayer for?"
           maxLength={MAX_LENGTH}
           rows={5}
           className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm text-gray-800 placeholder:text-warm-gray-light focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent resize-none"
@@ -309,8 +312,8 @@ export function PostForm() {
 
       {/* Category pills (1-3) */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-1">Category</p>
-        <p className="text-xs text-warm-gray-light mb-2">Choose up to 3</p>
+        <p className="text-sm font-medium text-gray-700 mb-1">Choose 1–3 areas</p>
+        <p className="text-xs text-warm-gray-light mb-2">What best describes this prayer?</p>
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((cat) => {
             const selected = categories.includes(cat.value);
@@ -328,13 +331,13 @@ export function PostForm() {
                   )
                 }
                 className={`
-                  px-3 py-1.5 rounded-full text-sm font-medium transition-colors
+                  px-4 py-2 rounded-full text-sm font-medium transition-colors
                   ${
                     selected
-                      ? "bg-amber-500 text-white"
+                      ? "bg-amber-400 text-amber-900 shadow-sm"
                       : atMax
                         ? "bg-cream-dark text-gray-400 cursor-not-allowed"
-                        : "bg-cream-dark text-gray-600 hover:bg-amber-50 hover:text-amber-700"
+                        : "bg-amber-50/60 text-gray-600 hover:bg-amber-100 hover:text-amber-700"
                   }
                 `}
               >
@@ -414,7 +417,7 @@ export function PostForm() {
       >
         {isPending
           ? aiLoading
-            ? "Generating prayer points…"
+            ? "Making this easier for others to pray for..."
             : "Checking…"
           : "Post prayer"}
       </button>

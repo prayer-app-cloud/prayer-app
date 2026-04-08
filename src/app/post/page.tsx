@@ -12,10 +12,10 @@ export default function PostPrayer() {
           ← Back
         </Link>
         <h1 className="text-2xl font-semibold text-gray-800 mt-3">
-          What do you need prayer for?
+          Share a prayer request
         </h1>
         <p className="text-sm text-warm-gray mt-1">
-          No names needed. No one will comment or reply. Just prayer.
+          Write what&apos;s on your heart. You can stay anonymous.
         </p>
       </header>
 
