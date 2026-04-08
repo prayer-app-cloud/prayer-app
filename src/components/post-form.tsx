@@ -189,7 +189,7 @@ export function PostForm() {
           <>
             <div>
               <h2 className="text-sm font-medium text-gray-700 mb-1">
-                How others can pray
+                What to pray for
               </h2>
               <p className="text-xs text-warm-gray-light mb-3">
                 Make sure this feels true to you.

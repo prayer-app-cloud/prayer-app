@@ -152,8 +152,8 @@ export function PrayerCard({
         {/* AI prayer points — secondary supporting section */}
         {prayerPoints.length > 0 && (
           <div className="mb-4 bg-amber-50/50 rounded-xl px-4 py-3">
-            <p className="text-[11px] font-medium text-amber-600 uppercase tracking-wide mb-2">
-              How others can pray
+            <p className="text-[11px] font-medium text-amber-600 mb-2">
+              What to pray for
             </p>
             <ul className="space-y-1">
               {prayerPoints.map((point, i) => (
