@@ -83,15 +83,14 @@ export function PrayerCard({
     ? prayer.text.slice(0, TEXT_PREVIEW_LENGTH) + "..."
     : prayer.text;
 
-  // Chip display: max 2 visible + overflow count
   const visibleChips = prayer.category.slice(0, 2);
   const overflowCount = prayer.category.length - 2;
 
-  // Bullets: collapsed on home (show 1 + "and X more"), expanded on detail
   const visibleBullets = showAllBullets ? prayerPoints : prayerPoints.slice(0, 1);
   const hiddenBulletCount = prayerPoints.length - 1;
 
-  const displayName = prayer.display_name_snapshot ?? (prayer.anonymous ? "Anonymous" : null);
+  // Default to display name; fall back to "Anonymous" only if explicitly anonymous with no snapshot
+  const displayName = prayer.display_name_snapshot || (prayer.anonymous ? "Anonymous" : null);
 
   function handlePrayClick() {
     if (prayed || loading) return;
@@ -113,7 +112,7 @@ export function PrayerCard({
     setTimeout(() => setAnimating(false), 700);
 
     setThankYouVisible(true);
-    setTimeout(() => setThankYouVisible(false), 4000);
+    setTimeout(() => setThankYouVisible(false), 7000);
 
     const result = await recordPrayerTap(prayer.id);
     if (!result.success && !result.alreadyPrayed) {
@@ -125,12 +124,12 @@ export function PrayerCard({
 
   return (
     <>
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+      <div className="bg-white/85 backdrop-blur-sm rounded-2xl p-5 shadow-[0_1px_3px_rgba(120,100,70,0.08)]">
         {/* Category chips + time */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex flex-wrap gap-1.5 items-center">
             {isUrgent && (
-              <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wide">
+              <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
                 Urgent
               </span>
             )}
@@ -160,18 +159,18 @@ export function PrayerCard({
 
         {/* Display name */}
         {displayName && (
-          <p className="text-xs text-stone-400 mb-1">{displayName}</p>
+          <p className="text-xs text-stone-500 mb-1">{displayName}</p>
         )}
 
         {/* Prayer text — the hero */}
         <div className="mb-3">
           {showFullText ? (
-            <p className="text-base font-medium text-gray-800 leading-relaxed">
+            <p className="text-base font-medium text-gray-900 leading-relaxed">
               {prayer.text}
             </p>
           ) : (
             <>
-              <p className="text-base font-medium text-gray-800 leading-relaxed">
+              <p className="text-base font-medium text-gray-900 leading-relaxed">
                 {textPreview}
               </p>
               {textIsTruncated && (
@@ -229,7 +228,7 @@ export function PrayerCard({
               ${
                 prayed
                   ? "bg-stone-100 text-stone-400 cursor-default"
-                  : "bg-stone-100 text-stone-600 hover:bg-stone-200 active:scale-95"
+                  : "bg-amber-50 text-amber-800 hover:bg-amber-100 active:scale-95 border border-amber-200/60"
               }
             `}
           >

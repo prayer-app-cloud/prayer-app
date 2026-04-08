@@ -76,7 +76,7 @@ export function PrayerDetail({
   const primaryCategory = prayer.category[0] ?? "other";
   const verse = useMemo(() => getRandomVerse(primaryCategory), [primaryCategory]);
 
-  const displayName = prayer.display_name_snapshot ?? (prayer.anonymous ? "Anonymous" : null);
+  const displayName = prayer.display_name_snapshot || (prayer.anonymous ? "Anonymous" : null);
 
   function handlePrayClick() {
     if (prayed || loading || isExpired) return;
@@ -98,7 +98,7 @@ export function PrayerDetail({
     setTimeout(() => setAnimating(false), 700);
 
     setThankYouVisible(true);
-    setTimeout(() => setThankYouVisible(false), 4000);
+    setTimeout(() => setThankYouVisible(false), 7000);
 
     const result = await recordPrayerTap(prayer.id);
     if (!result.success && !result.alreadyPrayed) {
@@ -137,7 +137,7 @@ export function PrayerDetail({
         ← Back to prayers
       </Link>
 
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+      <div className="bg-white/85 backdrop-blur-sm rounded-2xl p-5 shadow-[0_1px_3px_rgba(120,100,70,0.08)]">
         {/* Category chips + time */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex flex-wrap gap-1.5">
@@ -162,7 +162,7 @@ export function PrayerDetail({
 
         {/* Display name */}
         {displayName && (
-          <p className="text-xs text-stone-400 mb-1">{displayName}</p>
+          <p className="text-xs text-stone-500 mb-1">{displayName}</p>
         )}
 
         {/* Prayer Points — all expanded on detail page */}
@@ -206,7 +206,7 @@ export function PrayerDetail({
             )}
           </div>
         ) : (
-          <p className="text-base font-medium text-gray-800 leading-relaxed mb-4">
+          <p className="text-base font-medium text-gray-900 leading-relaxed mb-4">
             {prayer.text}
           </p>
         )}
@@ -245,7 +245,7 @@ export function PrayerDetail({
               ${
                 prayed
                   ? "bg-stone-100 text-stone-400 cursor-default"
-                  : "bg-amber-500 text-white hover:bg-amber-600 active:scale-[0.98] shadow-sm"
+                  : "bg-amber-50 text-amber-800 hover:bg-amber-100 active:scale-[0.98] border border-amber-200/60 shadow-sm"
               }
             `}
           >

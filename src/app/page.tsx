@@ -40,13 +40,16 @@ export default async function Home() {
 
   return (
     <main className="flex flex-col min-h-screen max-w-lg mx-auto px-4 pt-6 pb-20">
-      {/* Header with subtle radial warmth */}
-      <header className="mb-8 text-center relative">
-        <div className="absolute inset-0 -top-6 bg-[radial-gradient(ellipse_at_center,_rgba(251,191,36,0.06)_0%,_transparent_70%)] pointer-events-none" />
-        <h1 className="font-serif text-2xl font-semibold text-gray-800 mb-1 relative">
+      {/* Header with prayer ring motif */}
+      <header className="mb-8 text-center relative py-2">
+        <div className="absolute inset-0 -top-6 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[radial-gradient(circle,_rgba(251,191,36,0.07)_0%,_rgba(251,191,36,0.03)_40%,_transparent_70%)]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border border-amber-200/20" />
+        </div>
+        <h1 className="font-serif text-[1.7rem] font-semibold text-gray-800 mb-1.5 relative">
           Prayer Room
         </h1>
-        <p className="text-sm text-warm-gray relative">
+        <p className="text-[13px] text-stone-500 tracking-wide relative">
           You are heard here
         </p>
       </header>
