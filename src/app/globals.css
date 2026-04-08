@@ -93,3 +93,12 @@ body {
 .animate-count-pulse {
   animation: count-pulse 0.6s ease-out;
 }
+
+/* Hide scrollbar for filter pills */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
