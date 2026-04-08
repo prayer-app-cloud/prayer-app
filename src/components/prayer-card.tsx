@@ -6,27 +6,28 @@ import { GuidedPrayerSheet } from "@/components/guided-prayer-sheet";
 import { getCategoryStyle } from "@/lib/category-config";
 import { getRandomVerse } from "@/lib/verses";
 import {
-  Heart,
-  Users,
+  Heartbeat,
+  UsersThree,
   CloudRain,
-  Wallet,
-  Brain,
-  Briefcase,
-  Sparkles,
-} from "lucide-react";
+  Coins,
+  Spiral,
+  Compass,
+  Sparkle,
+  HandsPraying,
+} from "@phosphor-icons/react";
 import type { PrayerRequest } from "@/lib/types/database";
-import type { LucideIcon } from "lucide-react";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  health: Heart,
-  family: Users,
+const CATEGORY_ICONS: Record<string, PhosphorIcon> = {
+  health: Heartbeat,
+  family: UsersThree,
   grief: CloudRain,
-  finances: Wallet,
-  inner_struggle: Brain,
-  work: Briefcase,
-  school: Briefcase,
-  work_school: Briefcase,
-  other: Sparkles,
+  finances: Coins,
+  inner_struggle: Spiral,
+  work: Compass,
+  school: Compass,
+  work_school: Compass,
+  other: Sparkle,
 };
 
 function timeLeft(expiresAt: string): string {
@@ -72,7 +73,6 @@ export function PrayerCard({
   const primaryCategory = prayer.category[0] ?? "other";
   const primaryStyle = getCategoryStyle(primaryCategory);
 
-  // Pick a verse once when the component mounts (stable across re-renders)
   const verse = useMemo(() => getRandomVerse(primaryCategory), [primaryCategory]);
 
   const textIsTruncated = prayer.text.length > TEXT_PREVIEW_LENGTH;
@@ -82,7 +82,6 @@ export function PrayerCard({
 
   function handlePrayClick() {
     if (prayed || loading) return;
-
     if (hasGuidedPrayer) {
       setShowSheet(true);
     } else {
@@ -95,35 +94,31 @@ export function PrayerCard({
     if (prayed || loading) return;
     setLoading(true);
 
-    // Optimistic update
     setPrayed(true);
     setCount((c) => c + 1);
     setAnimating(true);
-    setTimeout(() => setAnimating(false), 600);
+    setTimeout(() => setAnimating(false), 700);
 
-    // Show thank you message
     setThankYouVisible(true);
-    setTimeout(() => setThankYouVisible(false), 3000);
+    setTimeout(() => setThankYouVisible(false), 4000);
 
     const result = await recordPrayerTap(prayer.id);
-
     if (!result.success && !result.alreadyPrayed) {
       setPrayed(false);
       setCount((c) => c - 1);
     }
-
     setLoading(false);
   }
 
   return (
     <>
       <div
-        className={`bg-white rounded-2xl p-6 shadow-sm border border-cream-dark border-l-[3px] ${
+        className={`bg-white/80 backdrop-blur-sm rounded-2xl p-7 shadow-sm border-l-[3px] ${
           isUrgent ? "border-l-amber-400" : primaryStyle.borderColor
         }`}
       >
         {/* Category tags + time + urgent badge */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex flex-wrap gap-1.5 items-center">
             {isUrgent && (
               <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wide">
@@ -132,13 +127,13 @@ export function PrayerCard({
             )}
             {prayer.category.map((cat) => {
               const style = getCategoryStyle(cat);
-              const Icon = CATEGORY_ICONS[cat] ?? Sparkles;
+              const Icon = CATEGORY_ICONS[cat] ?? Sparkle;
               return (
                 <span
                   key={cat}
                   className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${style.chipBg} ${style.chipText}`}
                 >
-                  <Icon size={14} />
+                  <Icon size={14} weight="thin" />
                   {style.label}
                 </span>
               );
@@ -149,15 +144,15 @@ export function PrayerCard({
           </span>
         </div>
 
-        {/* Raw prayer text first — the human story */}
+        {/* Prayer text — the human story */}
         <div className="mb-3">
           {showFullText ? (
-            <p className="text-sm text-gray-800 leading-relaxed">
+            <p className="text-base text-gray-800 leading-relaxed">
               {prayer.text}
             </p>
           ) : (
             <>
-              <p className="text-sm text-gray-800 leading-relaxed">
+              <p className="text-base text-gray-800 leading-relaxed">
                 {textPreview}
               </p>
               {textIsTruncated && (
@@ -172,19 +167,20 @@ export function PrayerCard({
           )}
         </div>
 
-        {/* Divider before prayer points */}
+        {/* Divider + "What to pray for" section */}
         {prayerPoints.length > 0 && (
           <>
-            <div className="border-t border-cream-dark/50 my-3" />
-            <div className="mb-4 bg-amber-50/50 rounded-xl px-4 py-3">
-              <p className="text-[11px] font-medium text-amber-600 mb-2">
+            <div className="border-t border-stone-200/50 my-4" />
+            <div className={`mb-4 ${primaryStyle.tintBg} rounded-xl px-4 py-3`}>
+              <p className={`font-serif text-xs font-medium ${primaryStyle.chipText} mb-2 flex items-center gap-1.5`}>
+                <HandsPraying size={13} weight="thin" />
                 What to pray for
               </p>
               <ul className="space-y-1">
                 {prayerPoints.map((point, i) => (
                   <li
                     key={i}
-                    className={`flex items-start gap-2 text-sm text-gray-700 leading-snug`}
+                    className="flex items-start gap-2 text-sm text-gray-700 leading-snug"
                   >
                     <span className={`${primaryStyle.bulletColor} mt-0.5 shrink-0`}>•</span>
                     {point}
@@ -196,7 +192,7 @@ export function PrayerCard({
         )}
 
         {/* Divider before action row */}
-        <div className="border-t border-cream-dark/50 my-3" />
+        <div className="border-t border-stone-200/50 my-4" />
 
         {/* I Prayed button + count */}
         <div className="flex items-center justify-between">
@@ -208,33 +204,33 @@ export function PrayerCard({
               transition-all duration-200
               ${
                 prayed
-                  ? "bg-amber-100 text-amber-700 cursor-default"
-                  : "bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 active:scale-95 border border-amber-200"
+                  ? "bg-amber-100/80 text-amber-700 cursor-default"
+                  : `${primaryStyle.tintBg} ${primaryStyle.chipText} hover:opacity-80 active:scale-95 border border-stone-200/60`
               }
             `}
           >
-            <span className="text-base">{prayed ? "🙏" : "🤲"}</span>
+            <HandsPraying size={18} weight={prayed ? "duotone" : "thin"} />
             {prayed ? "Prayed" : "I Prayed"}
           </button>
 
           <span
             className={`
-              text-sm font-medium tabular-nums
+              text-sm font-medium tabular-nums rounded-full px-2 py-0.5
               transition-all duration-300
-              ${animating ? "text-amber-500 scale-110" : "text-warm-gray"}
+              ${animating ? "text-amber-500 scale-110 animate-count-pulse" : "text-warm-gray"}
             `}
           >
             {count} {count === 1 ? "prayer" : "prayers"}
           </span>
         </div>
 
-        {/* Thank you message + verse after praying */}
+        {/* Thank you message + verse */}
         {thankYouVisible && (
-          <div className="mt-3 text-center animate-fade-out">
+          <div className="mt-4 text-center animate-fade-out">
             <p className="text-xs text-amber-600">
               Thank you for praying. They are not alone.
             </p>
-            <p className="text-[11px] text-warm-gray italic mt-1.5 leading-relaxed">
+            <p className="font-serif text-[11px] text-warm-gray italic mt-2 leading-relaxed">
               &ldquo;{verse.text}&rdquo; — {verse.reference}
             </p>
           </div>

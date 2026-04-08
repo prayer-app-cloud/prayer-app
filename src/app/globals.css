@@ -23,6 +23,7 @@
   --color-amber-500: #F59E0B;
   --color-amber-600: #D97706;
   --font-sans: var(--font-inter);
+  --font-serif: var(--font-source-serif);
 }
 
 body {
@@ -30,6 +31,11 @@ body {
   background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+}
+
+/* Serif utility — applied via className */
+.font-serif {
+  font-family: var(--font-source-serif), Georgia, 'Times New Roman', serif;
 }
 
 @keyframes fade-in {
@@ -47,6 +53,27 @@ body {
   to { opacity: 0; }
 }
 
+@keyframes gentle-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(251, 191, 36, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+@keyframes count-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
@@ -56,5 +83,13 @@ body {
 }
 
 .animate-fade-out {
-  animation: fade-out 0.5s ease-out 2.5s forwards;
+  animation: fade-out 0.6s ease-out 3.4s forwards;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 0.7s ease-out;
+}
+
+.animate-count-pulse {
+  animation: count-pulse 0.6s ease-out;
 }

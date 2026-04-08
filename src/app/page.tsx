@@ -42,13 +42,9 @@ export default async function Home() {
     <main className="flex flex-col min-h-screen max-w-lg mx-auto px-4 py-6">
       {/* Warm header area */}
       <header className="mb-8 text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-amber-400 text-lg">✦</span>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Prayer Room
-          </h1>
-          <span className="text-amber-400 text-lg">✦</span>
-        </div>
+        <h1 className="font-serif text-2xl font-semibold text-gray-800 mb-1">
+          Prayer Room
+        </h1>
         <p className="text-sm text-warm-gray">
           A quiet place to share prayer and pray for others
         </p>

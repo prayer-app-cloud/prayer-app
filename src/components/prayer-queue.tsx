@@ -55,7 +55,7 @@ export function PrayerQueue({
 
   return (
     <div>
-      <div className="space-y-5">
+      <div className="space-y-6">
         {prayers.map((prayer) => (
           <PrayerCard
             key={prayer.id}

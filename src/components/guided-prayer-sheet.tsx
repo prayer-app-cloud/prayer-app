@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { HandsPraying } from "@phosphor-icons/react";
 
 export function GuidedPrayerSheet({
   guidedPrayer,
@@ -13,7 +14,6 @@ export function GuidedPrayerSheet({
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Close on escape key
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -22,7 +22,6 @@ export function GuidedPrayerSheet({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  // Prevent body scroll while sheet is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -32,33 +31,33 @@ export function GuidedPrayerSheet({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
-      {/* Backdrop */}
+      {/* Backdrop — dims slowly */}
       <div
-        className="absolute inset-0 bg-black/40 animate-fade-in"
+        className="absolute inset-0 bg-black/30 animate-fade-in"
         onClick={onClose}
       />
 
-      {/* Sheet */}
+      {/* Sheet — warm ivory, generous space */}
       <div
         ref={sheetRef}
-        className="relative w-full max-w-lg bg-white rounded-t-2xl px-6 pt-6 pb-8 animate-slide-up"
+        className="relative w-full max-w-lg bg-stone-50 rounded-t-3xl px-8 pt-8 pb-10 animate-slide-up"
       >
         {/* Handle */}
-        <div className="flex justify-center mb-5">
-          <div className="w-10 h-1 rounded-full bg-cream-dark" />
+        <div className="flex justify-center mb-6">
+          <div className="w-10 h-1 rounded-full bg-stone-300/60" />
         </div>
 
         {/* Header */}
-        <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-2">
+        <h2 className="font-serif text-xl text-gray-800 mb-1">
           Pause and pray
-        </p>
-        <p className="text-xs text-warm-gray-light mb-5">
+        </h2>
+        <p className="text-xs text-warm-gray-light mb-6">
           Words to pray
         </p>
 
-        {/* Prayer text */}
-        <div className="bg-cream rounded-xl p-5 mb-6">
-          <p className="text-gray-800 text-base leading-relaxed italic">
+        {/* Prayer text — the sacred moment */}
+        <div className="bg-amber-50/30 rounded-2xl p-6 mb-8">
+          <p className="font-serif text-gray-800 text-lg leading-relaxed italic">
             {guidedPrayer}
           </p>
         </div>
@@ -66,9 +65,10 @@ export function GuidedPrayerSheet({
         {/* Done button */}
         <button
           onClick={onDone}
-          className="w-full py-3 rounded-full text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors active:scale-[0.98]"
+          className="w-full py-3.5 rounded-full text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          Done ✓
+          <HandsPraying size={18} weight="duotone" />
+          Done
         </button>
       </div>
     </div>

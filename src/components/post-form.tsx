@@ -5,26 +5,27 @@ import { useRouter } from "next/navigation";
 import { validatePrayerRequest, publishPrayerRequest } from "@/app/actions";
 import { getCategoryStyle } from "@/lib/category-config";
 import {
-  Heart,
-  Users,
+  Heartbeat,
+  UsersThree,
   CloudRain,
-  Wallet,
-  Brain,
-  Briefcase,
-  Sparkles,
-} from "lucide-react";
+  Coins,
+  Spiral,
+  Compass,
+  Sparkle,
+  HandsPraying,
+} from "@phosphor-icons/react";
 import type { CategoryEnum, UrgencyEnum } from "@/lib/types/database";
-import type { LucideIcon } from "lucide-react";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  health: Heart,
-  family: Users,
+const CATEGORY_ICONS: Record<string, PhosphorIcon> = {
+  health: Heartbeat,
+  family: UsersThree,
   grief: CloudRain,
-  finances: Wallet,
-  inner_struggle: Brain,
-  work: Briefcase,
-  school: Briefcase,
-  other: Sparkles,
+  finances: Coins,
+  inner_struggle: Spiral,
+  work: Compass,
+  school: Compass,
+  other: Sparkle,
 };
 
 const CATEGORIES: { value: CategoryEnum; label: string }[] = [
@@ -46,25 +47,21 @@ type Step = "form" | "approval" | "success";
 export function PostForm() {
   const router = useRouter();
 
-  // Form state
   const [text, setText] = useState("");
   const [categories, setCategories] = useState<CategoryEnum[]>([]);
   const [anonymous, setAnonymous] = useState(true);
   const [urgency, setUrgency] = useState<UrgencyEnum>("normal");
   const [consent, setConsent] = useState(false);
 
-  // Flow state
   const [step, setStep] = useState<Step>("form");
   const [error, setError] = useState<string | null>(null);
   const [selfHarm, setSelfHarm] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // AI-generated content (editable)
   const [prayerPoints, setPrayerPoints] = useState<string[]>([]);
   const [guidedPrayer, setGuidedPrayer] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  // Success state
   const [successSlug, setSuccessSlug] = useState<string | null>(null);
 
   const charCount = text.length;
@@ -76,7 +73,6 @@ export function PostForm() {
     consent &&
     !isPending;
 
-  // ── Step 1: Validate and call AI ─────────────────────────────
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
@@ -85,11 +81,7 @@ export function PostForm() {
     setSelfHarm(false);
 
     startTransition(async () => {
-      // Server-side validation
-      const validation = await validatePrayerRequest({
-        text,
-        categories,
-      });
+      const validation = await validatePrayerRequest({ text, categories });
 
       if (validation.selfHarm) {
         setSelfHarm(true);
@@ -101,16 +93,12 @@ export function PostForm() {
         return;
       }
 
-      // Call AI endpoint
       setAiLoading(true);
       try {
         const res = await fetch("/api/generate-prayer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text,
-            category: categories[0],
-          }),
+          body: JSON.stringify({ text, category: categories[0] }),
         });
 
         const aiData = await res.json();
@@ -119,12 +107,10 @@ export function PostForm() {
           setPrayerPoints(aiData.prayer_points);
           setGuidedPrayer(aiData.guided_prayer);
         } else {
-          // AI failed — will publish without Prayer Points
           setPrayerPoints([]);
           setGuidedPrayer(null);
         }
       } catch {
-        // AI failed gracefully
         setPrayerPoints([]);
         setGuidedPrayer(null);
       }
@@ -133,7 +119,6 @@ export function PostForm() {
     });
   }
 
-  // ── Step 2: Publish with approved content ────────────────────
   function handlePublish() {
     startTransition(async () => {
       const result = await publishPrayerRequest({
@@ -156,7 +141,6 @@ export function PostForm() {
     });
   }
 
-  // ── Edit a prayer point ──────────────────────────────────────
   function updatePoint(index: number, value: string) {
     setPrayerPoints((prev) => prev.map((p, i) => (i === index ? value : p)));
   }
@@ -168,15 +152,17 @@ export function PostForm() {
   // ── Success screen ───────────────────────────────────────────
   if (step === "success") {
     return (
-      <div className="text-center py-12">
-        <div className="text-4xl mb-4">🕊️</div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">
+      <div className="text-center py-16">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 mb-5 animate-gentle-pulse">
+          <HandsPraying size={32} weight="duotone" className="text-amber-500" />
+        </div>
+        <h2 className="font-serif text-2xl text-gray-800 mb-2">
           You are heard
         </h2>
         <p className="text-sm text-warm-gray mb-1">
           Your request is now live. Others can begin praying for you.
         </p>
-        <p className="text-xs text-warm-gray-light mb-6">
+        <p className="text-xs text-warm-gray-light mb-8">
           You&apos;re not carrying this alone.
         </p>
         <div className="flex flex-col gap-3">
@@ -210,7 +196,7 @@ export function PostForm() {
         {prayerPoints.length > 0 ? (
           <>
             <div>
-              <h2 className="text-sm font-medium text-gray-700 mb-1">
+              <h2 className="font-serif text-base text-gray-700 mb-1">
                 What to pray for
               </h2>
               <p className="text-xs text-warm-gray-light mb-3">
@@ -241,13 +227,13 @@ export function PostForm() {
 
             {guidedPrayer && (
               <div>
-                <h2 className="text-sm font-medium text-gray-700 mb-1">
+                <h2 className="font-serif text-base text-gray-700 mb-1">
                   Words to Pray
                 </h2>
                 <p className="text-xs text-warm-gray-light mb-3">
                   This is what someone will read when they pray for you.
                 </p>
-                <div className="bg-amber-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed italic">
+                <div className="bg-amber-50/40 rounded-xl p-5 text-sm text-gray-700 leading-relaxed font-serif italic">
                   {guidedPrayer}
                 </div>
               </div>
@@ -284,7 +270,6 @@ export function PostForm() {
   // ── Form screen ──────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Self-harm resources */}
       {selfHarm && (
         <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-900">
           <p className="font-medium mb-2">You are not alone.</p>
@@ -304,7 +289,6 @@ export function PostForm() {
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-700">
           {error}
@@ -332,7 +316,7 @@ export function PostForm() {
         </div>
       </div>
 
-      {/* Category pills (1-3) */}
+      {/* Category pills */}
       <div>
         <p className="text-sm font-medium text-gray-700 mb-1">Choose 1–3 areas</p>
         <p className="text-xs text-warm-gray-light mb-2">What best describes this prayer?</p>
@@ -341,7 +325,7 @@ export function PostForm() {
             const selected = categories.includes(cat.value);
             const atMax = categories.length >= 3 && !selected;
             const style = getCategoryStyle(cat.value);
-            const Icon = CATEGORY_ICONS[cat.value] ?? Sparkles;
+            const Icon = CATEGORY_ICONS[cat.value] ?? Sparkle;
             return (
               <button
                 key={cat.value}
@@ -361,11 +345,11 @@ export function PostForm() {
                       ? `${style.chipBg} ${style.chipText} shadow-sm ring-1 ring-current/20`
                       : atMax
                         ? "bg-cream-dark text-gray-400 cursor-not-allowed"
-                        : "bg-cream-dark text-gray-600 hover:bg-amber-50/60 hover:text-gray-700"
+                        : "bg-cream-dark text-gray-600 hover:bg-stone-100 hover:text-gray-700"
                   }
                 `}
               >
-                <Icon size={18} />
+                <Icon size={18} weight={selected ? "duotone" : "thin"} />
                 {cat.label}
               </button>
             );
