@@ -77,6 +77,7 @@ export function PrayerDetail({
   const hasGuidedPrayer = !!prayer.guided_prayer;
   const isExpired = prayer.status === "expired";
   const isAnswered = prayer.status === "answered";
+  const titleDuplicatesBody = !!prayer.title && prayer.text.startsWith(prayer.title);
 
   const primaryCategory = prayer.category[0] ?? "other";
   const verse = useMemo(() => getRandomVerse(primaryCategory), [primaryCategory]);
@@ -217,8 +218,8 @@ export function PrayerDetail({
           </div>
         )}
 
-        {/* Full text */}
-        {prayerPoints.length > 0 ? (
+        {/* Full text — skip "Full story" toggle if title already covers the body opening */}
+        {prayerPoints.length > 0 && !titleDuplicatesBody ? (
           <div className="mb-4">
             {showFullText ? (
               <div>
@@ -236,11 +237,11 @@ export function PrayerDetail({
               </button>
             )}
           </div>
-        ) : (
+        ) : prayerPoints.length === 0 ? (
           <p className="text-base font-medium text-gray-900 leading-relaxed mb-4">
             {prayer.text}
           </p>
-        )}
+        ) : null}
 
         {/* Update text */}
         {prayer.update_text && (

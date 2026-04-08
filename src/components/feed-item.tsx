@@ -58,6 +58,8 @@ export function FeedItem({
   const bodyPreview = prayer.text.length > BODY_LIMIT
     ? prayer.text.slice(0, BODY_LIMIT) + "..."
     : prayer.text;
+  const titleDuplicatesBody = !!prayer.title && prayer.text.startsWith(prayer.title);
+  const showBody = !!prayer.title && !titleDuplicatesBody;
   const firstPoint = prayerPoints[0] ?? null;
   const isAnswered = prayer.status === "answered";
   const hasUpdate = !!prayer.update_text;
@@ -140,8 +142,8 @@ export function FeedItem({
             )}
           </div>
 
-          {/* Body preview (only if we have a title) */}
-          {prayer.title && (
+          {/* Body preview (only if title doesn't duplicate body) */}
+          {showBody && (
             <p className="text-sm text-stone-600 leading-snug mb-1">
               {bodyPreview}
             </p>
