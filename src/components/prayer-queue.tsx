@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from "react";
 import { FeedItem } from "@/components/feed-item";
-import { fetchPrayers, fetchPrayedRequestIds } from "@/app/actions";
+import { fetchPrayers, fetchPrayedRequestIds, fetchFollowedRequestIds } from "@/app/actions";
 import { getCategoryStyle } from "@/lib/category-config";
 import {
   Heartbeat,
@@ -31,15 +31,20 @@ const FILTER_CATEGORIES: { value: string; label: string; icon: PhosphorIcon }[] 
 export function PrayerQueue({
   initialPrayers,
   initialPrayedIds,
+  initialFollowedIds,
   initialHasMore,
 }: {
   initialPrayers: PrayerRequest[];
   initialPrayedIds: string[];
+  initialFollowedIds: string[];
   initialHasMore: boolean;
 }) {
   const [prayers, setPrayers] = useState(initialPrayers);
   const [prayedIds, setPrayedIds] = useState<Set<string>>(
     new Set(initialPrayedIds)
+  );
+  const [followedIds, setFollowedIds] = useState<Set<string>>(
+    new Set(initialFollowedIds)
   );
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isPending, startTransition] = useTransition();
@@ -52,14 +57,21 @@ export function PrayerQueue({
       const newPrayers = result.prayers;
 
       if (newPrayers.length > 0) {
-        const newPrayedSet = await fetchPrayedRequestIds(
-          newPrayers.map((p) => p.id)
-        );
+        const ids = newPrayers.map((p) => p.id);
+        const [newPrayedSet, newFollowedSet] = await Promise.all([
+          fetchPrayedRequestIds(ids),
+          fetchFollowedRequestIds(ids),
+        ]);
 
         setPrayers((prev) => [...prev, ...newPrayers]);
         setPrayedIds((prev) => {
           const next = new Set(prev);
           newPrayedSet.forEach((id) => next.add(id));
+          return next;
+        });
+        setFollowedIds((prev) => {
+          const next = new Set(prev);
+          newFollowedSet.forEach((id) => next.add(id));
           return next;
         });
       }
@@ -74,7 +86,7 @@ export function PrayerQueue({
 
   return (
     <div>
-      {/* Category filter pills — horizontal scroll */}
+      {/* Category filter pills */}
       <div
         ref={scrollRef}
         className="sticky top-0 z-10 bg-cream/90 backdrop-blur-sm -mx-4 px-4 py-2 mb-2 flex gap-2 overflow-x-auto scrollbar-hide"
@@ -101,7 +113,6 @@ export function PrayerQueue({
             </button>
           );
         })}
-        {/* Spacer so last pill isn't cut off */}
         <div className="shrink-0 w-4" aria-hidden="true" />
       </div>
 
@@ -121,6 +132,7 @@ export function PrayerQueue({
               key={prayer.id}
               prayer={prayer}
               initialPrayed={prayedIds.has(prayer.id)}
+              initialFollowed={followedIds.has(prayer.id)}
             />
           ))}
         </div>

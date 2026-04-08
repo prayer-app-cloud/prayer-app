@@ -10,11 +10,10 @@ export default async function Home() {
   const supabase = await createClient();
   const sessionId = await getSessionId();
 
-  // Fetch first page of active prayers
   const { data: prayers } = await supabase
     .from("prayer_requests")
     .select("*")
-    .in("status", ["active", "updated"])
+    .in("status", ["active", "updated", "answered"])
     .lt("report_count", 3)
     .order("urgency", { ascending: false })
     .order("created_at", { ascending: false })
@@ -24,18 +23,26 @@ export default async function Home() {
   const hasMore = prayerList.length > PAGE_SIZE;
   const displayPrayers = prayerList.slice(0, PAGE_SIZE);
 
-  // Check which ones the current user already prayed for
   let prayedIds: string[] = [];
+  let followedIds: string[] = [];
   if (sessionId && displayPrayers.length > 0) {
-    const { data: taps } = await supabase
-      .from("prayer_taps")
-      .select("request_id")
-      .eq("session_id", sessionId)
-      .in(
-        "request_id",
-        displayPrayers.map((p) => p.id)
-      );
-    prayedIds = (taps ?? []).map((t) => t.request_id);
+    const ids = displayPrayers.map((p) => p.id);
+
+    const [tapsResult, followsResult] = await Promise.all([
+      supabase
+        .from("prayer_taps")
+        .select("request_id")
+        .eq("session_id", sessionId)
+        .in("request_id", ids),
+      supabase
+        .from("prayer_follows")
+        .select("prayer_request_id")
+        .eq("user_session_id", sessionId)
+        .in("prayer_request_id", ids),
+    ]);
+
+    prayedIds = (tapsResult.data ?? []).map((t) => t.request_id);
+    followedIds = (followsResult.data ?? []).map((f) => f.prayer_request_id);
   }
 
   return (
@@ -54,10 +61,10 @@ export default async function Home() {
         </p>
       </header>
 
-      {/* Prayer queue */}
       <PrayerQueue
         initialPrayers={displayPrayers}
         initialPrayedIds={prayedIds}
+        initialFollowedIds={followedIds}
         initialHasMore={hasMore}
       />
 

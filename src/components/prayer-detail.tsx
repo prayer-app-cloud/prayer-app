@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { recordPrayerTap } from "@/app/actions";
+import { recordPrayerTap, followPrayer, unfollowPrayer } from "@/app/actions";
 import { GuidedPrayerSheet } from "@/components/guided-prayer-sheet";
 import { getCategoryStyle } from "@/lib/category-config";
 import { getRandomVerse } from "@/lib/verses";
@@ -16,6 +16,7 @@ import {
   Sparkle,
   HandsPraying,
   ShareNetwork,
+  BookmarkSimple,
 } from "@phosphor-icons/react";
 import type { PrayerRequest } from "@/lib/types/database";
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
@@ -55,12 +56,15 @@ export function PrayerDetail({
   prayer,
   isOwner,
   initialPrayed,
+  initialFollowed,
 }: {
   prayer: PrayerRequest;
   isOwner: boolean;
   initialPrayed: boolean;
+  initialFollowed: boolean;
 }) {
   const [prayed, setPrayed] = useState(initialPrayed);
+  const [followed, setFollowed] = useState(initialFollowed);
   const [count, setCount] = useState(prayer.prayer_count);
   const [animating, setAnimating] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -72,6 +76,7 @@ export function PrayerDetail({
   const prayerPoints = parsePrayerPoints(prayer.prayer_points);
   const hasGuidedPrayer = !!prayer.guided_prayer;
   const isExpired = prayer.status === "expired";
+  const isAnswered = prayer.status === "answered";
 
   const primaryCategory = prayer.category[0] ?? "other";
   const verse = useMemo(() => getRandomVerse(primaryCategory), [primaryCategory]);
@@ -108,10 +113,20 @@ export function PrayerDetail({
     setLoading(false);
   }
 
+  function handleBookmark() {
+    if (followed) {
+      setFollowed(false);
+      unfollowPrayer(prayer.id);
+    } else {
+      setFollowed(true);
+      followPrayer(prayer.id);
+    }
+  }
+
   const handleShare = useCallback(async () => {
     const url = window.location.href;
     const shareData = {
-      title: "Someone needs prayer",
+      title: prayer.title || "Someone needs prayer",
       text: "Someone needs prayer. Tap to pray for them.",
       url,
     };
@@ -126,7 +141,7 @@ export function PrayerDetail({
       await navigator.clipboard.writeText(url);
       alert("Link copied to clipboard");
     }
-  }, []);
+  }, [prayer.title]);
 
   return (
     <>
@@ -136,6 +151,15 @@ export function PrayerDetail({
       >
         ← Back to prayers
       </Link>
+
+      {/* Answered banner */}
+      {isAnswered && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200/60 px-4 py-3 mb-4 text-center">
+          <p className="text-sm font-medium text-emerald-700">
+            This prayer has been answered
+          </p>
+        </div>
+      )}
 
       <div className="bg-white/85 backdrop-blur-sm rounded-2xl p-5 shadow-[0_1px_3px_rgba(120,100,70,0.08)]">
         {/* Category chips + time */}
@@ -162,10 +186,17 @@ export function PrayerDetail({
 
         {/* Display name */}
         {displayName && (
-          <p className="text-xs text-stone-500 mb-1">{displayName}</p>
+          <p className="text-xs text-stone-500 mb-2">{displayName}</p>
         )}
 
-        {/* Prayer Points — all expanded on detail page */}
+        {/* Title — hero */}
+        {prayer.title && (
+          <h2 className="font-serif text-xl font-semibold text-gray-900 mb-3 leading-snug">
+            {prayer.title}
+          </h2>
+        )}
+
+        {/* Prayer Points — all expanded */}
         {prayerPoints.length > 0 && (
           <div className="mb-4">
             <p className="font-serif text-xs text-stone-500 mb-1.5 flex items-center gap-1">
@@ -283,6 +314,14 @@ export function PrayerDetail({
           Share
         </button>
 
+        <button
+          onClick={handleBookmark}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
+        >
+          <BookmarkSimple size={16} weight={followed ? "duotone" : "thin"} className={followed ? "text-amber-500" : ""} />
+          {followed ? "Saved" : "Save"}
+        </button>
+
         {!reported ? (
           <button
             onClick={() => setReported(true)}
@@ -306,15 +345,6 @@ export function PrayerDetail({
           >
             Share an update
           </Link>
-        </div>
-      )}
-
-      {/* Answered status */}
-      {prayer.status === "answered" && (
-        <div className="mt-4 rounded-2xl bg-green-50 border border-green-200 p-5 text-center">
-          <p className="text-sm font-medium text-green-800">
-            This prayer has been answered.
-          </p>
         </div>
       )}
 

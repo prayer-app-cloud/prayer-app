@@ -50,7 +50,7 @@ const GEMINI_API_URL =
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, category } = await request.json();
+    const { text, title, category } = await request.json();
 
     if (!text || typeof text !== "string") {
       return NextResponse.json(null, { status: 400 });
@@ -62,7 +62,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(null);
     }
 
-    const userPrompt = `Prayer request (category: ${category}):\n\n${text}`;
+    const titleLine = title ? `Title: ${title}\n` : "";
+    const userPrompt = `Prayer request (category: ${category}):\n\n${titleLine}${text}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);

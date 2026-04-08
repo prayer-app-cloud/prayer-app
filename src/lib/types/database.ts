@@ -36,8 +36,16 @@ export type NotificationTypeEnum =
   | "expiry_warning"
   | "milestone";
 
+export interface PrayerFollow {
+  id: string;
+  user_session_id: string;
+  prayer_request_id: string;
+  created_at: string;
+}
+
 export interface PrayerRequest {
   id: string;
+  title: string | null;
   text: string;
   category: CategoryEnum[];
   session_id: string;

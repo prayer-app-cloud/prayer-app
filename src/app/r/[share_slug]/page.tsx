@@ -38,6 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Prayer not found" };
   }
 
+  const title = prayer.title || "Someone needs prayer";
   const categoryLabel = prayer.category
     .map((c) => CATEGORY_LABELS[c] ?? c)
     .join(", ");
@@ -47,16 +48,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       : prayer.text;
 
   return {
-    title: "Someone needs prayer",
+    title,
     description: `${categoryLabel} — ${textPreview}`,
     openGraph: {
-      title: "Someone needs prayer",
+      title,
       description: `${categoryLabel} — ${textPreview}`,
       type: "website",
     },
     twitter: {
       card: "summary",
-      title: "Someone needs prayer",
+      title,
       description: `${categoryLabel} — ${textPreview}`,
     },
   };
@@ -77,17 +78,26 @@ export default async function PrayerDetailPage({ params }: PageProps) {
   const sessionId = await getSessionId();
   const isOwner = sessionId === prayer.session_id;
 
-  // Check if current user already prayed
   let hasPrayed = false;
+  let hasFollowed = false;
   if (sessionId) {
     const supabase = await createClient();
-    const { data } = await supabase
-      .from("prayer_taps")
-      .select("id")
-      .eq("request_id", prayer.id)
-      .eq("session_id", sessionId)
-      .limit(1);
-    hasPrayed = (data?.length ?? 0) > 0;
+    const [prayedResult, followedResult] = await Promise.all([
+      supabase
+        .from("prayer_taps")
+        .select("id")
+        .eq("request_id", prayer.id)
+        .eq("session_id", sessionId)
+        .limit(1),
+      supabase
+        .from("prayer_follows")
+        .select("id")
+        .eq("prayer_request_id", prayer.id)
+        .eq("user_session_id", sessionId)
+        .limit(1),
+    ]);
+    hasPrayed = (prayedResult.data?.length ?? 0) > 0;
+    hasFollowed = (followedResult.data?.length ?? 0) > 0;
   }
 
   return (
@@ -96,6 +106,7 @@ export default async function PrayerDetailPage({ params }: PageProps) {
         prayer={prayer}
         isOwner={isOwner}
         initialPrayed={hasPrayed}
+        initialFollowed={hasFollowed}
       />
     </main>
   );

@@ -47,6 +47,7 @@ type Step = "form" | "approval" | "success";
 export function PostForm({ displayName }: { displayName: string | null }) {
   const router = useRouter();
 
+  const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [categories, setCategories] = useState<CategoryEnum[]>([]);
   const [anonymous, setAnonymous] = useState(false);
@@ -64,8 +65,13 @@ export function PostForm({ displayName }: { displayName: string | null }) {
 
   const [successSlug, setSuccessSlug] = useState<string | null>(null);
 
+  const titleCount = title.length;
   const charCount = text.length;
+  const TITLE_MIN = 5;
+  const TITLE_MAX = 100;
   const canSubmit =
+    titleCount >= TITLE_MIN &&
+    titleCount <= TITLE_MAX &&
     charCount >= MIN_LENGTH &&
     charCount <= MAX_LENGTH &&
     categories.length >= 1 &&
@@ -81,7 +87,7 @@ export function PostForm({ displayName }: { displayName: string | null }) {
     setSelfHarm(false);
 
     startTransition(async () => {
-      const validation = await validatePrayerRequest({ text, categories });
+      const validation = await validatePrayerRequest({ title, text, categories });
 
       if (validation.selfHarm) {
         setSelfHarm(true);
@@ -98,7 +104,7 @@ export function PostForm({ displayName }: { displayName: string | null }) {
         const res = await fetch("/api/generate-prayer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, category: categories[0] }),
+          body: JSON.stringify({ title, text, category: categories[0] }),
         });
 
         const aiData = await res.json();
@@ -122,6 +128,7 @@ export function PostForm({ displayName }: { displayName: string | null }) {
   function handlePublish() {
     startTransition(async () => {
       const result = await publishPrayerRequest({
+        title,
         text,
         categories,
         anonymous,
@@ -296,7 +303,32 @@ export function PostForm({ displayName }: { displayName: string | null }) {
         </div>
       )}
 
-      {/* Text input */}
+      {/* Title input */}
+      <div>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Brief title (e.g. Please pray for my mom's surgery)"
+          maxLength={TITLE_MAX}
+          className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-transparent"
+        />
+        <div className="flex justify-between mt-1">
+          {titleCount > 0 && titleCount < TITLE_MIN && (
+            <span className="text-xs text-amber-600">Add a brief title so others know how to pray</span>
+          )}
+          {titleCount === 0 && <span />}
+          <span
+            className={`text-xs tabular-nums ml-auto ${
+              titleCount > TITLE_MAX ? "text-red-500" : "text-stone-400"
+            }`}
+          >
+            {titleCount}/{TITLE_MAX}
+          </span>
+        </div>
+      </div>
+
+      {/* Body text input */}
       <div>
         <textarea
           value={text}

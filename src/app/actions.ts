@@ -49,6 +49,23 @@ export async function fetchPrayedRequestIds(requestIds: string[]): Promise<Set<s
   return new Set((data ?? []).map((t) => t.request_id));
 }
 
+// ── Check which requests the current user is following ──────────
+export async function fetchFollowedRequestIds(requestIds: string[]): Promise<Set<string>> {
+  if (requestIds.length === 0) return new Set();
+
+  const sessionId = await getSessionId();
+  if (!sessionId) return new Set();
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("prayer_follows")
+    .select("prayer_request_id")
+    .eq("user_session_id", sessionId)
+    .in("prayer_request_id", requestIds);
+
+  return new Set((data ?? []).map((f) => f.prayer_request_id));
+}
+
 // ── Record an "I prayed" tap ────────────────────────────────────
 export async function recordPrayerTap(requestId: string): Promise<{
   success: boolean;
@@ -62,7 +79,6 @@ export async function recordPrayerTap(requestId: string): Promise<{
 
   const supabase = await createClient();
 
-  // Insert the tap (unique constraint prevents duplicates)
   const { error: tapError } = await supabase
     .from("prayer_taps")
     .insert({
@@ -79,7 +95,6 @@ export async function recordPrayerTap(requestId: string): Promise<{
     return { success: false, error: "Something went wrong." };
   }
 
-  // Increment prayer count atomically
   const { error: rpcError } = await supabase.rpc("increment_prayer_count", {
     p_request_id: requestId,
   });
@@ -88,7 +103,6 @@ export async function recordPrayerTap(requestId: string): Promise<{
     console.error("increment_prayer_count error:", rpcError);
   }
 
-  // Create notification for the prayer poster
   const { data: request } = await supabase
     .from("prayer_requests")
     .select("session_id")
@@ -106,9 +120,45 @@ export async function recordPrayerTap(requestId: string): Promise<{
   return { success: true };
 }
 
+// ── Follow / unfollow a prayer ──────────────────────────────────
+export async function followPrayer(requestId: string): Promise<{ success: boolean }> {
+  const sessionId = await getSessionId();
+  if (!sessionId) return { success: false };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("prayer_follows")
+    .insert({ user_session_id: sessionId, prayer_request_id: requestId });
+
+  if (error && error.code !== "23505") {
+    console.error("followPrayer error:", error);
+    return { success: false };
+  }
+  return { success: true };
+}
+
+export async function unfollowPrayer(requestId: string): Promise<{ success: boolean }> {
+  const sessionId = await getSessionId();
+  if (!sessionId) return { success: false };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("prayer_follows")
+    .delete()
+    .eq("user_session_id", sessionId)
+    .eq("prayer_request_id", requestId);
+
+  if (error) {
+    console.error("unfollowPrayer error:", error);
+    return { success: false };
+  }
+  return { success: true };
+}
+
 // ── Step 1: Validate prayer text (no DB insert) ─────────────────
 export async function validatePrayerRequest(formData: {
   text: string;
+  title: string;
   categories: CategoryEnum[];
 }): Promise<{
   valid: boolean;
@@ -121,17 +171,22 @@ export async function validatePrayerRequest(formData: {
   }
 
   const text = formData.text.trim();
+  const title = formData.title.trim();
   const categories = formData.categories;
 
   if (categories.length < 1 || categories.length > 3) {
     return { valid: false, error: "Choose between 1 and 3 categories." };
   }
 
+  if (title.length < 5 || title.length > 100) {
+    return { valid: false, error: "Add a brief title so others know how to pray." };
+  }
+
   if (text.length < 10 || text.length > 500) {
     return { valid: false, error: "Prayer must be between 10 and 500 characters." };
   }
 
-  if (containsSelfHarm(text)) {
+  if (containsSelfHarm(text) || containsSelfHarm(title)) {
     return { valid: false, selfHarm: true };
   }
 
@@ -140,11 +195,17 @@ export async function validatePrayerRequest(formData: {
     return { valid: false, error: filterResult.reason };
   }
 
+  const titleFilter = filterContent(title);
+  if (!titleFilter.ok) {
+    return { valid: false, error: titleFilter.reason };
+  }
+
   return { valid: true };
 }
 
 // ── Step 2: Publish prayer with optional AI-generated content ───
 export async function publishPrayerRequest(formData: {
+  title: string;
   text: string;
   categories: CategoryEnum[];
   anonymous: boolean;
@@ -167,6 +228,7 @@ export async function publishPrayerRequest(formData: {
   const { data, error } = await supabase
     .from("prayer_requests")
     .insert({
+      title: formData.title.trim(),
       text: formData.text.trim(),
       category: formData.categories,
       session_id: sessionId,
