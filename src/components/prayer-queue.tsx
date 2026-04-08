@@ -101,6 +101,8 @@ export function PrayerQueue({
             </button>
           );
         })}
+        {/* Spacer so last pill isn't cut off */}
+        <div className="shrink-0 w-4" aria-hidden="true" />
       </div>
 
       {/* Feed items */}
