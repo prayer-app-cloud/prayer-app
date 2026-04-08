@@ -1,20 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useMemo } from "react";
 import { recordPrayerTap } from "@/app/actions";
 import { GuidedPrayerSheet } from "@/components/guided-prayer-sheet";
+import { getCategoryStyle } from "@/lib/category-config";
+import { getRandomVerse } from "@/lib/verses";
+import {
+  Heart,
+  Users,
+  CloudRain,
+  Wallet,
+  Brain,
+  Briefcase,
+  Sparkles,
+} from "lucide-react";
 import type { PrayerRequest } from "@/lib/types/database";
+import type { LucideIcon } from "lucide-react";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  health: "Health",
-  family: "Family",
-  grief: "Grief",
-  finances: "Finances",
-  inner_struggle: "Inner Struggle",
-  work: "Work",
-  school: "School",
-  other: "Other",
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  health: Heart,
+  family: Users,
+  grief: CloudRain,
+  finances: Wallet,
+  inner_struggle: Brain,
+  work: Briefcase,
+  school: Briefcase,
+  work_school: Briefcase,
+  other: Sparkles,
 };
 
 function timeLeft(expiresAt: string): string {
@@ -56,6 +68,12 @@ export function PrayerCard({
   const prayerPoints = parsePrayerPoints(prayer.prayer_points);
   const hasGuidedPrayer = !!prayer.guided_prayer;
   const isUrgent = prayer.urgency === "high";
+
+  const primaryCategory = prayer.category[0] ?? "other";
+  const primaryStyle = getCategoryStyle(primaryCategory);
+
+  // Pick a verse once when the component mounts (stable across re-renders)
+  const verse = useMemo(() => getRandomVerse(primaryCategory), [primaryCategory]);
 
   const textIsTruncated = prayer.text.length > TEXT_PREVIEW_LENGTH;
   const textPreview = textIsTruncated
@@ -100,26 +118,31 @@ export function PrayerCard({
   return (
     <>
       <div
-        className={`bg-white rounded-2xl p-6 shadow-sm border border-cream-dark ${
-          isUrgent ? "border-l-[3px] border-l-amber-400" : ""
+        className={`bg-white rounded-2xl p-6 shadow-sm border border-cream-dark border-l-[3px] ${
+          isUrgent ? "border-l-amber-400" : primaryStyle.borderColor
         }`}
       >
         {/* Category tags + time + urgent badge */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex flex-wrap gap-1.5 items-center">
             {isUrgent && (
-              <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wide">
+              <span className="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 uppercase tracking-wide">
                 Urgent
               </span>
             )}
-            {prayer.category.map((cat) => (
-              <span
-                key={cat}
-                className="inline-block text-xs font-medium px-3 py-1 rounded-full bg-amber-50/70 text-amber-600"
-              >
-                {CATEGORY_LABELS[cat] ?? cat}
-              </span>
-            ))}
+            {prayer.category.map((cat) => {
+              const style = getCategoryStyle(cat);
+              const Icon = CATEGORY_ICONS[cat] ?? Sparkles;
+              return (
+                <span
+                  key={cat}
+                  className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full ${style.chipBg} ${style.chipText}`}
+                >
+                  <Icon size={14} />
+                  {style.label}
+                </span>
+              );
+            })}
           </div>
           <span className="text-xs text-warm-gray-light shrink-0 ml-2">
             {timeLeft(prayer.expires_at)}
@@ -149,25 +172,31 @@ export function PrayerCard({
           )}
         </div>
 
-        {/* AI prayer points — secondary supporting section */}
+        {/* Divider before prayer points */}
         {prayerPoints.length > 0 && (
-          <div className="mb-4 bg-amber-50/50 rounded-xl px-4 py-3">
-            <p className="text-[11px] font-medium text-amber-600 mb-2">
-              What to pray for
-            </p>
-            <ul className="space-y-1">
-              {prayerPoints.map((point, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2 text-sm text-gray-700 leading-snug"
-                >
-                  <span className="text-amber-400 mt-0.5 shrink-0">•</span>
-                  {point}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <>
+            <div className="border-t border-cream-dark/50 my-3" />
+            <div className="mb-4 bg-amber-50/50 rounded-xl px-4 py-3">
+              <p className="text-[11px] font-medium text-amber-600 mb-2">
+                What to pray for
+              </p>
+              <ul className="space-y-1">
+                {prayerPoints.map((point, i) => (
+                  <li
+                    key={i}
+                    className={`flex items-start gap-2 text-sm text-gray-700 leading-snug`}
+                  >
+                    <span className={`${primaryStyle.bulletColor} mt-0.5 shrink-0`}>•</span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
         )}
+
+        {/* Divider before action row */}
+        <div className="border-t border-cream-dark/50 my-3" />
 
         {/* I Prayed button + count */}
         <div className="flex items-center justify-between">
@@ -199,11 +228,16 @@ export function PrayerCard({
           </span>
         </div>
 
-        {/* Thank you message after praying */}
+        {/* Thank you message + verse after praying */}
         {thankYouVisible && (
-          <p className="text-xs text-amber-600 mt-3 text-center animate-fade-out">
-            Thank you for praying. They are not alone.
-          </p>
+          <div className="mt-3 text-center animate-fade-out">
+            <p className="text-xs text-amber-600">
+              Thank you for praying. They are not alone.
+            </p>
+            <p className="text-[11px] text-warm-gray italic mt-1.5 leading-relaxed">
+              &ldquo;{verse.text}&rdquo; — {verse.reference}
+            </p>
+          </div>
         )}
       </div>
 

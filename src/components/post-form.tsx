@@ -3,7 +3,29 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { validatePrayerRequest, publishPrayerRequest } from "@/app/actions";
+import { getCategoryStyle } from "@/lib/category-config";
+import {
+  Heart,
+  Users,
+  CloudRain,
+  Wallet,
+  Brain,
+  Briefcase,
+  Sparkles,
+} from "lucide-react";
 import type { CategoryEnum, UrgencyEnum } from "@/lib/types/database";
+import type { LucideIcon } from "lucide-react";
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  health: Heart,
+  family: Users,
+  grief: CloudRain,
+  finances: Wallet,
+  inner_struggle: Brain,
+  work: Briefcase,
+  school: Briefcase,
+  other: Sparkles,
+};
 
 const CATEGORIES: { value: CategoryEnum; label: string }[] = [
   { value: "health", label: "Health" },
@@ -233,7 +255,7 @@ export function PostForm() {
           </>
         ) : (
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
-            Prayer Points couldn't be generated. Your prayer will be
+            Prayer Points couldn&apos;t be generated. Your prayer will be
             published with the original text.
           </div>
         )}
@@ -318,6 +340,8 @@ export function PostForm() {
           {CATEGORIES.map((cat) => {
             const selected = categories.includes(cat.value);
             const atMax = categories.length >= 3 && !selected;
+            const style = getCategoryStyle(cat.value);
+            const Icon = CATEGORY_ICONS[cat.value] ?? Sparkles;
             return (
               <button
                 key={cat.value}
@@ -331,16 +355,17 @@ export function PostForm() {
                   )
                 }
                 className={`
-                  px-4 py-2 rounded-full text-sm font-medium transition-colors
+                  inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors
                   ${
                     selected
-                      ? "bg-amber-400 text-amber-900 shadow-sm"
+                      ? `${style.chipBg} ${style.chipText} shadow-sm ring-1 ring-current/20`
                       : atMax
                         ? "bg-cream-dark text-gray-400 cursor-not-allowed"
-                        : "bg-amber-50/60 text-gray-600 hover:bg-amber-100 hover:text-amber-700"
+                        : "bg-cream-dark text-gray-600 hover:bg-amber-50/60 hover:text-gray-700"
                   }
                 `}
               >
+                <Icon size={18} />
                 {cat.label}
               </button>
             );
