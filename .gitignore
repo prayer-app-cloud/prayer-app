@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+supabase/.temp/
 /.pnp
 .pnp.*
 .yarn/*
@@ -42,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.claude/skills/

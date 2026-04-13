@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { recordPrayerTap } from "@/app/actions";
+
 import { GuidedPrayerSheet } from "@/components/guided-prayer-sheet";
 import { getCategoryStyle } from "@/lib/category-config";
 import { getRandomVerse } from "@/lib/verses";
@@ -217,7 +218,7 @@ export function PrayerCard({
         {/* Divider before action row */}
         <div className="border-t border-stone-200/50 my-3" />
 
-        {/* I Prayed button + count */}
+        {/* Pray button + count */}
         <div className="flex items-center justify-between">
           <button
             onClick={handlePrayClick}
@@ -233,12 +234,12 @@ export function PrayerCard({
             `}
           >
             <HandsPraying size={18} weight={prayed ? "duotone" : "thin"} />
-            {prayed ? "Prayed \u2713" : "I Prayed"}
+            {prayed ? "Prayed \u2713" : "Pray"}
           </button>
 
           <span
             className={`
-              text-xs tabular-nums rounded-full px-2 py-0.5
+              text-sm tabular-nums rounded-full px-2 py-0.5
               transition-all duration-300
               ${animating ? "text-amber-500 scale-110 animate-count-pulse" : "text-stone-400"}
             `}

@@ -13,7 +13,19 @@
       "Bash(cp package-lock.json \"D:/Projects-Claude-Code/prayer-app/\")",
       "Bash(npm run:*)",
       "Bash(npx next:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(curl -s -X POST \"https://hucznektbzklptcvxrhl.supabase.co/rest/v1/rpc/sql\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3puZWt0YnprbHB0Y3Z4cmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI3ODM4MywiZXhwIjoyMDkwODU0MzgzfQ.WoyCtu-7CXC702vK--0arG1S8i1FT5SviF0d4oayhVY\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3puZWt0YnprbHB0Y3Z4cmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI3ODM4MywiZXhwIjoyMDkwODU0MzgzfQ.WoyCtu-7CXC702vK--0arG1S8i1FT5SviF0d4oayhVY\" -H \"Content-Type: application/json\")",
+      "Bash(curl -s -X POST \"https://hucznektbzklptcvxrhl.supabase.co/pg\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3puZWt0YnprbHB0Y3Z4cmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI3ODM4MywiZXhwIjoyMDkwODU0MzgzfQ.WoyCtu-7CXC702vK--0arG1S8i1FT5SviF0d4oayhVY\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3puZWt0YnprbHB0Y3Z4cmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI3ODM4MywiZXhwIjoyMDkwODU0MzgzfQ.WoyCtu-7CXC702vK--0arG1S8i1FT5SviF0d4oayhVY\" -H \"Content-Type: application/sql\" -d @-)",
+      "Bash(curl -s -X POST https://hucznektbzklptcvxrhl.supabase.co/rest/v1/rpc -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3puZWt0YnprbHB0Y3Z4cmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI3ODM4MywiZXhwIjoyMDkwODU0MzgzfQ.WoyCtu-7CXC702vK--0arG1S8i1FT5SviF0d4oayhVY' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3puZWt0YnprbHB0Y3Z4cmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI3ODM4MywiZXhwIjoyMDkwODU0MzgzfQ.WoyCtu-7CXC702vK--0arG1S8i1FT5SviF0d4oayhVY' -H 'Content-Type: application/json')",
+      "Bash(npx supabase:*)",
+      "Bash(curl -s -X POST https://hucznektbzklptcvxrhl.supabase.co/pg/query -H 'x-supabase-db-connection-string: postgresql://postgres:postgres@hucznektbzklptcvxrhl.supabase.co:5432/postgres' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1Y3puZWt0YnprbHB0Y3Z4cmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTI3ODM4MywiZXhwIjoyMDkwODU0MzgzfQ.WoyCtu-7CXC702vK--0arG1S8i1FT5SviF0d4oayhVY' -H 'Content-Type: application/json' -d '{\"query\": \"SELECT 1\"}')",
+      "Bash(curl:*)",
+      "Bash(tasklist //FI \"IMAGENAME eq node.exe\" //FO CSV)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(npx vercel:*)",
+      "Bash(gh repo:*)",
+      "Bash(git push:*)",
+      "mcp__claude-flow__browser_open"
     ]
   }
 }

@@ -2,11 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { recordPrayerTap, followPrayer, unfollowPrayer } from "@/app/actions";
+import { recordPrayerTap } from "@/app/actions";
+
 import { GuidedPrayerSheet } from "@/components/guided-prayer-sheet";
 import { getCategoryStyle } from "@/lib/category-config";
 import { getRandomVerse } from "@/lib/verses";
-import { HandsPraying, BookmarkSimple } from "@phosphor-icons/react";
+import { HandsPraying } from "@phosphor-icons/react";
+import { VerseCard } from "@/components/verse-card";
 import type { PrayerRequest } from "@/lib/types/database";
 
 function timeLeft(expiresAt: string): string {
@@ -32,7 +34,7 @@ function parsePrayerPoints(raw: string | null): string[] {
   }
 }
 
-const BODY_LIMIT = 80;
+const BODY_LIMIT = 100;
 
 export function FeedItem({
   prayer,
@@ -45,7 +47,6 @@ export function FeedItem({
 }) {
   const router = useRouter();
   const [prayed, setPrayed] = useState(initialPrayed);
-  const [followed, setFollowed] = useState(initialFollowed);
   const [count, setCount] = useState(prayer.prayer_count);
   const [animating, setAnimating] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,7 +67,6 @@ export function FeedItem({
   const showBody = !!prayer.title && !titleDuplicatesBody;
   const firstPoint = prayerPoints[0] ?? null;
   const isAnswered = prayer.status === "answered";
-  const hasUpdate = !!prayer.update_text;
 
   function handleRowClick() {
     router.push(`/r/${prayer.share_slug}`);
@@ -79,17 +79,6 @@ export function FeedItem({
       setShowSheet(true);
     } else {
       confirmPrayer();
-    }
-  }
-
-  function handleBookmarkClick(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (followed) {
-      setFollowed(false);
-      unfollowPrayer(prayer.id);
-    } else {
-      setFollowed(true);
-      followPrayer(prayer.id);
     }
   }
 
@@ -116,109 +105,94 @@ export function FeedItem({
 
   return (
     <>
-      <div className={`border-b border-stone-100 last:border-b-0 ${isAnswered ? "border-l-2 border-l-emerald-200" : ""}`}>
+      <div
+        className={`
+          rounded-2xl shadow-sm transition-all duration-200 animate-fade-in overflow-hidden
+          ${isAnswered ? "bg-amber-50/30" : "bg-white"}
+        `}
+      >
+        {/* Tappable content area */}
         <div
           onClick={handleRowClick}
-          className="py-4 px-1 cursor-pointer hover:bg-stone-50/60 active:bg-stone-50 transition-colors rounded-lg -mx-1"
+          className="p-5 pb-3 cursor-pointer hover:bg-stone-50/30 active:bg-stone-50/50 transition-colors"
         >
-          {/* Meta line: name · category · time */}
-          <div className="flex items-center gap-1.5 text-[11px] text-stone-400 mb-1">
+          {/* Meta line: dot + category · name · time */}
+          <div className="flex items-center gap-1.5 text-xs text-stone-400 mb-3">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${primaryStyle.dotColor}`} />
+            <span className={primaryStyle.chipText}>{primaryStyle.label}</span>
             {displayName && (
               <>
-                <span className="text-stone-500 font-medium">{displayName}</span>
                 <span>·</span>
+                <span className="text-stone-500 font-medium">{displayName}</span>
               </>
             )}
-            <span>{primaryStyle.label}</span>
             <span>·</span>
             <span>{timeLeft(prayer.expires_at)}</span>
           </div>
 
-          {/* Title (headline) + answered badge */}
-          <div className="flex items-center gap-2 mb-0.5">
-            <p className="text-[15px] font-semibold text-gray-900 leading-snug">
+          {/* Title — serif font */}
+          <div className="flex items-center gap-2 mb-2">
+            <p className="font-serif text-lg font-semibold text-gray-900 leading-relaxed">
               {prayer.title || bodyPreview}
             </p>
             {isAnswered && (
-              <span className="inline-flex shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+              <span className="inline-flex shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-100/60 text-amber-700">
                 Answered
               </span>
             )}
           </div>
 
-          {/* Body preview (only if title doesn't duplicate body) */}
+          {/* Body preview — max 2 lines */}
           {showBody && (
-            <p className="text-sm text-stone-600 leading-snug mb-1">
+            <p className="text-sm text-stone-600 leading-relaxed line-clamp-2 mb-2">
               {bodyPreview}
             </p>
           )}
 
-          {/* One-line prayer point summary */}
-          {firstPoint && (
-            <p className="text-sm text-stone-400 italic leading-snug truncate">
+          {/* Prayer point summary */}
+          {firstPoint && !showBody && (
+            <p className="text-sm text-stone-400 italic leading-relaxed truncate">
               Pray for: {firstPoint}
             </p>
           )}
         </div>
 
         {/* Action row */}
-        <div className="flex items-center justify-between pb-4 px-1">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrayClick}
-              disabled={prayed}
-              className={`
-                flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium
-                transition-all duration-200
-                ${
-                  prayed
-                    ? "bg-stone-100 text-stone-400 cursor-default"
-                    : "bg-amber-50 text-amber-800 hover:bg-amber-100 active:scale-95 border border-amber-200/60"
-                }
-              `}
-            >
-              <HandsPraying size={16} weight={prayed ? "duotone" : "thin"} />
-              {prayed ? "Prayed \u2713" : "I Prayed"}
-            </button>
+        <div className="flex items-center px-5 pb-4 pt-2 gap-3">
+          <button
+            onClick={handlePrayClick}
+            disabled={prayed}
+            className={`
+              flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium
+              transition-all duration-200
+              ${
+                prayed
+                  ? "bg-stone-50 text-stone-400 cursor-default"
+                  : "bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 active:scale-[0.96] border border-amber-200 shadow-sm"
+              }
+            `}
+          >
+            <HandsPraying size={16} weight={prayed ? "duotone" : "thin"} />
+            {prayed ? "Prayed \u2713" : "Pray"}
+          </button>
 
-            <button
-              onClick={handleBookmarkClick}
-              className="p-2 rounded-full hover:bg-stone-100 transition-colors"
-              aria-label={followed ? "Unfollow prayer" : "Follow prayer"}
-            >
-              <BookmarkSimple
-                size={18}
-                weight={followed ? "duotone" : "thin"}
-                className={followed ? "text-amber-500" : "text-stone-400"}
-              />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {hasUpdate && (
-              <span className="text-[11px] text-stone-400">1 update</span>
-            )}
-            <span
-              className={`
-                text-xs tabular-nums
-                transition-all duration-300
-                ${animating ? "text-amber-500 scale-110 animate-count-pulse" : "text-stone-400"}
-              `}
-            >
-              {count} {count === 1 ? "prayer" : "prayers"}
-            </span>
-          </div>
+          <span
+            className={`
+              text-sm tabular-nums transition-all duration-300
+              ${animating ? "text-amber-500 scale-110 animate-count-pulse" : "text-stone-400"}
+            `}
+          >
+            {count} {count === 1 ? "prayer" : "prayers"}
+          </span>
         </div>
 
-        {/* Thank you message + verse */}
+        {/* Thank you + verse card */}
         {thankYouVisible && (
-          <div className="pb-3 px-1 text-center animate-fade-out">
-            <p className="text-xs text-amber-600">
+          <div className="px-5 pb-5 animate-fade-out">
+            <p className="text-xs text-amber-600 text-center mb-2.5">
               Thank you for praying. They are not alone.
             </p>
-            <p className="font-serif text-[11px] text-stone-400 italic mt-1 leading-relaxed">
-              &ldquo;{verse.text}&rdquo; — {verse.reference}
-            </p>
+            <VerseCard text={verse.text} reference={verse.reference} />
           </div>
         )}
       </div>
@@ -226,6 +200,7 @@ export function FeedItem({
       {showSheet && prayer.guided_prayer && (
         <GuidedPrayerSheet
           guidedPrayer={prayer.guided_prayer}
+          category={primaryCategory}
           onDone={confirmPrayer}
           onClose={() => setShowSheet(false)}
         />

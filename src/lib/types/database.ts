@@ -33,6 +33,7 @@ export type ReportReasonEnum =
 export type NotificationTypeEnum =
   | "prayer_received"
   | "request_answered"
+  | "request_updated"
   | "expiry_warning"
   | "milestone";
 
@@ -112,5 +113,22 @@ export interface Notification {
   type: NotificationTypeEnum;
   request_id: string;
   read: boolean;
+  created_at: string;
+}
+
+export interface JournalEntry {
+  id: string;
+  session_id: string;
+  request_id: string | null;
+  text: string;
+  created_at: string;
+  prayer_request?: PrayerRequest | null;
+}
+
+export interface PrayerReminder {
+  id: string;
+  session_id: string;
+  reminder_time: string;
+  enabled: boolean;
   created_at: string;
 }

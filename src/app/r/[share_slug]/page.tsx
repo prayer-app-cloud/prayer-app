@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionId } from "@/lib/session";
 import { PrayerDetail } from "@/components/prayer-detail";
-import type { PrayerRequest } from "@/lib/types/database";
+import { getCategoryStyle } from "@/lib/category-config";
+import type { PrayerRequest, Update } from "@/lib/types/database";
 
 const CATEGORY_LABELS: Record<string, string> = {
   health: "Health",
@@ -78,18 +80,30 @@ export default async function PrayerDetailPage({ params }: PageProps) {
   const sessionId = await getSessionId();
   const isOwner = sessionId === prayer.session_id;
 
+  const supabase2 = await createClient();
+
   let hasPrayed = false;
   let hasFollowed = false;
+  let updates: Update[] = [];
+
+  // Fetch updates for this prayer
+  const { data: updatesData } = await supabase2
+    .from("updates")
+    .select("*")
+    .eq("request_id", prayer.id)
+    .order("created_at", { ascending: true });
+  updates = (updatesData ?? []) as Update[];
+
   if (sessionId) {
-    const supabase = await createClient();
+    const supabase3 = await createClient();
     const [prayedResult, followedResult] = await Promise.all([
-      supabase
+      supabase3
         .from("prayer_taps")
         .select("id")
         .eq("request_id", prayer.id)
         .eq("session_id", sessionId)
         .limit(1),
-      supabase
+      supabase3
         .from("prayer_follows")
         .select("id")
         .eq("prayer_request_id", prayer.id)
@@ -100,14 +114,32 @@ export default async function PrayerDetailPage({ params }: PageProps) {
     hasFollowed = (followedResult.data?.length ?? 0) > 0;
   }
 
+  const primaryCategory = prayer.category[0] ?? "other";
+  const categoryImage = getCategoryStyle(primaryCategory).image;
+
   return (
-    <main className="flex flex-col min-h-screen max-w-lg mx-auto px-4 py-6">
-      <PrayerDetail
-        prayer={prayer}
-        isOwner={isOwner}
-        initialPrayed={hasPrayed}
-        initialFollowed={hasFollowed}
-      />
+    <main className="flex flex-col min-h-screen max-w-lg mx-auto">
+      {/* Category illustration header */}
+      <div className="relative w-full h-[120px] rounded-b-xl overflow-hidden">
+        <Image
+          src={categoryImage}
+          alt={getCategoryStyle(primaryCategory).label}
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+      </div>
+
+      <div className="px-4 py-6">
+        <PrayerDetail
+          prayer={prayer}
+          isOwner={isOwner}
+          initialPrayed={hasPrayed}
+          initialFollowed={hasFollowed}
+          updates={updates}
+        />
+      </div>
     </main>
   );
 }

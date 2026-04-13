@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { validatePrayerRequest, publishPrayerRequest } from "@/app/actions";
+
 import { getCategoryStyle } from "@/lib/category-config";
 import {
   Heartbeat,
@@ -144,6 +145,8 @@ export function PostForm({ displayName }: { displayName: string | null }) {
         return;
       }
 
+      const tp = parseInt(localStorage.getItem("totalPosted") ?? "0", 10) + 1;
+      localStorage.setItem("totalPosted", String(tp));
       setSuccessSlug(result.shareSlug ?? null);
       setStep("success");
     });

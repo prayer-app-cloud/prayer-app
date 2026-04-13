@@ -46,7 +46,7 @@ Respond ONLY with valid JSON, no markdown, no preamble:
 {"prayer_points": ["point 1", "point 2"], "guided_prayer": "God, ..."}`;
 
 const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent";
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const userPrompt = `Prayer request (category: ${category}):\n\n${titleLine}${text}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
     const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: "POST",
@@ -85,7 +85,6 @@ export async function POST(request: NextRequest) {
         generationConfig: {
           temperature: 0.3,
           maxOutputTokens: 1024,
-          thinkingConfig: { thinkingBudget: 0 },
           responseMimeType: "application/json",
         },
       }),

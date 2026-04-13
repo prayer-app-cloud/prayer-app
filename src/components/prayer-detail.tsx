@@ -3,8 +3,12 @@
 import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { recordPrayerTap, followPrayer, unfollowPrayer } from "@/app/actions";
+import type { Update } from "@/lib/types/database";
+
 import { GuidedPrayerSheet } from "@/components/guided-prayer-sheet";
-import { getCategoryStyle } from "@/lib/category-config";
+import { VerseCard } from "@/components/verse-card";
+import { getCategoryStyle, ANSWERED_GRADIENT } from "@/lib/category-config";
+import { getCategoryArt } from "@/components/category-art";
 import { getRandomVerse } from "@/lib/verses";
 import {
   Heartbeat,
@@ -56,16 +60,29 @@ function parsePrayerPoints(raw: string | null): string[] {
   }
 }
 
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export function PrayerDetail({
   prayer,
   isOwner,
   initialPrayed,
   initialFollowed,
+  updates,
 }: {
   prayer: PrayerRequest;
   isOwner: boolean;
   initialPrayed: boolean;
   initialFollowed: boolean;
+  updates: Update[];
 }) {
   const [prayed, setPrayed] = useState(initialPrayed);
   const [followed, setFollowed] = useState(initialFollowed);
@@ -76,6 +93,7 @@ export function PrayerDetail({
   const [showFullText, setShowFullText] = useState(false);
   const [reported, setReported] = useState(false);
   const [thankYouVisible, setThankYouVisible] = useState(false);
+  const [showFollowPrompt, setShowFollowPrompt] = useState(false);
 
   const prayerPoints = parsePrayerPoints(prayer.prayer_points);
   const hasGuidedPrayer = !!prayer.guided_prayer;
@@ -84,9 +102,13 @@ export function PrayerDetail({
   const titleDuplicatesBody = !!prayer.title && prayer.text.startsWith(prayer.title);
 
   const primaryCategory = prayer.category[0] ?? "other";
+  const primaryStyle = getCategoryStyle(primaryCategory);
+  const CategoryArt = getCategoryArt(primaryCategory);
   const verse = useMemo(() => getRandomVerse(primaryCategory), [primaryCategory]);
 
   const displayName = prayer.display_name_snapshot || (prayer.anonymous ? "Anonymous" : null);
+
+  const heroGradient = isAnswered ? ANSWERED_GRADIENT : primaryStyle.heroGradient;
 
   function handlePrayClick() {
     if (prayed || loading || isExpired) return;
@@ -109,6 +131,12 @@ export function PrayerDetail({
 
     setThankYouVisible(true);
     setTimeout(() => setThankYouVisible(false), 7000);
+
+    // Show follow prompt after praying if not already following
+    if (!followed) {
+      setShowFollowPrompt(true);
+      setTimeout(() => setShowFollowPrompt(false), 6000);
+    }
 
     const result = await recordPrayerTap(prayer.id);
     if (!result.success && !result.alreadyPrayed) {
@@ -152,67 +180,72 @@ export function PrayerDetail({
     <>
       <Link
         href="/"
-        className="text-sm text-warm-gray hover:text-amber-600 transition-colors mb-6"
+        className="text-sm text-stone-400 hover:text-amber-600 transition-colors mb-4 inline-block"
       >
         ← Back to prayers
       </Link>
 
-      {/* Answered banner */}
-      {isAnswered && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200/60 px-4 py-3 mb-4 text-center">
-          <p className="text-sm font-medium text-emerald-700">
-            This prayer has been answered
-          </p>
+      {/* ── Hero area with category gradient + illustration ── */}
+      <div className={`rounded-t-2xl bg-gradient-to-b ${heroGradient} px-6 pt-8 pb-6 relative overflow-hidden`}>
+        {/* Category illustration — subtle background */}
+        <div className="absolute top-0 right-0 w-36 h-24 opacity-35 pointer-events-none">
+          <CategoryArt className="w-full h-full" />
         </div>
-      )}
+        {/* Subtle halo decoration */}
+        <div className="absolute top-4 right-4 w-24 h-24 rounded-full bg-white/10 blur-2xl pointer-events-none" />
 
-      <div className="bg-white/85 backdrop-blur-sm rounded-2xl p-5 shadow-[0_1px_3px_rgba(120,100,70,0.08)]">
-        {/* Category chips + time */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex flex-wrap gap-1.5">
-            {prayer.category.map((cat) => {
-              const style = getCategoryStyle(cat);
-              const Icon = CATEGORY_ICONS[cat] ?? Sparkle;
-              return (
-                <span
-                  key={cat}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600"
-                >
-                  <Icon size={13} weight="thin" className={style.chipText} />
-                  {style.label}
-                </span>
-              );
-            })}
+        {/* Answered badge */}
+        {isAnswered && (
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-medium px-3 py-1 rounded-full bg-amber-100/60 text-amber-700 mb-3">
+            Answered
           </div>
-          <span className="text-[11px] text-stone-400 shrink-0 ml-2">
-            {timeLeft(prayer.expires_at)}
-          </span>
+        )}
+
+        {/* Meta */}
+        <div className="flex items-center gap-1.5 text-[11px] text-stone-400 mb-3">
+          {displayName && (
+            <>
+              <span className="text-stone-500 font-medium">{displayName}</span>
+              <span>·</span>
+            </>
+          )}
+          {prayer.category.map((cat, i) => {
+            const style = getCategoryStyle(cat);
+            const Icon = CATEGORY_ICONS[cat] ?? Sparkle;
+            return (
+              <span key={cat} className="inline-flex items-center gap-0.5">
+                {i > 0 && <span className="mx-0.5">·</span>}
+                <Icon size={12} weight="thin" className={style.chipText} />
+                <span>{style.label}</span>
+              </span>
+            );
+          })}
+          <span>·</span>
+          <span>{timeLeft(prayer.expires_at)}</span>
         </div>
 
-        {/* Display name */}
-        {displayName && (
-          <p className="text-xs text-stone-500 mb-2">{displayName}</p>
-        )}
-
-        {/* Title — hero */}
+        {/* Title */}
         {prayer.title && (
-          <h2 className="font-serif text-xl font-semibold text-gray-900 mb-3 leading-snug">
+          <h1 className="font-serif text-2xl font-semibold text-gray-900 leading-snug">
             {prayer.title}
-          </h2>
+          </h1>
         )}
+      </div>
 
-        {/* Prayer Points — all expanded */}
+      {/* ── Main content card ── */}
+      <div className="bg-white/85 backdrop-blur-sm rounded-b-2xl px-6 pt-5 pb-6 shadow-[0_2px_8px_rgba(120,100,70,0.06)]">
+        {/* Prayer Points */}
         {prayerPoints.length > 0 && (
-          <div className="mb-4">
-            <p className="font-serif text-xs text-stone-500 mb-1.5 flex items-center gap-1">
+          <div className="mb-5">
+            <p className="font-serif text-xs text-stone-500 mb-2 flex items-center gap-1">
               <HandsPraying size={12} weight="thin" />
               What to pray for
             </p>
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {prayerPoints.map((point, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2 text-sm text-gray-600 leading-snug"
+                  className="flex items-start gap-2 text-[15px] text-gray-700 leading-snug"
                 >
                   <span className="text-stone-300 mt-0.5 shrink-0">•</span>
                   {point}
@@ -222,13 +255,13 @@ export function PrayerDetail({
           </div>
         )}
 
-        {/* Full text — skip "Full story" toggle if title already covers the body opening */}
+        {/* Full text */}
         {prayerPoints.length > 0 && !titleDuplicatesBody ? (
-          <div className="mb-4">
+          <div className="mb-5">
             {showFullText ? (
               <div>
-                <p className="text-xs text-stone-500 mb-1.5">Full story</p>
-                <p className="text-base font-medium text-gray-800 leading-relaxed">
+                <p className="text-xs text-stone-400 mb-2">Full story</p>
+                <p className="text-base text-gray-800 leading-relaxed">
                   {prayer.text}
                 </p>
               </div>
@@ -242,21 +275,43 @@ export function PrayerDetail({
             )}
           </div>
         ) : prayerPoints.length === 0 ? (
-          <p className="text-base font-medium text-gray-900 leading-relaxed mb-4">
+          <p className="text-base text-gray-800 leading-relaxed mb-5">
             {prayer.text}
           </p>
         ) : null}
 
-        {/* Update text */}
-        {prayer.update_text && (
-          <div className="rounded-xl bg-amber-50/40 p-4 mb-4">
-            <p className="text-xs text-stone-500 mb-1">Update</p>
-            <p className="text-sm text-gray-700">{prayer.update_text}</p>
+        {/* Update timeline */}
+        {updates.length > 0 && (
+          <div className="mb-5 space-y-3">
+            <p className="text-xs text-stone-500 font-medium uppercase tracking-wide">Updates</p>
+            {updates.map((update) => (
+              <div
+                key={update.id}
+                className={`rounded-xl p-4 ${
+                  update.type === "answered"
+                    ? "bg-amber-50/50 border border-amber-100/50"
+                    : "bg-stone-50/50 border border-stone-100/50"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-xs font-medium ${
+                    update.type === "answered" ? "text-amber-700" : "text-stone-500"
+                  }`}>
+                    {update.type === "answered" ? "Answered" : "Update"}
+                  </span>
+                  <span className="text-xs text-stone-400">{timeAgo(update.created_at)}</span>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">{update.text}</p>
+              </div>
+            ))}
           </div>
         )}
 
+        {/* Divider */}
+        <div className="border-t border-stone-100 my-5" />
+
         {/* Prayer count */}
-        <div className="flex items-center justify-center mb-4">
+        <div className="flex items-center justify-center mb-5">
           <span
             className={`
               text-2xl font-semibold tabular-nums transition-all duration-300
@@ -270,7 +325,7 @@ export function PrayerDetail({
           </span>
         </div>
 
-        {/* I Prayed button */}
+        {/* Pray button */}
         {!isExpired && (
           <button
             onClick={handlePrayClick}
@@ -286,7 +341,7 @@ export function PrayerDetail({
             `}
           >
             <HandsPraying size={20} weight={prayed ? "duotone" : "thin"} />
-            {prayed ? "Prayed \u2713" : "I Prayed"}
+            {prayed ? "Prayed \u2713" : "Pray"}
           </button>
         )}
 
@@ -296,15 +351,30 @@ export function PrayerDetail({
           </div>
         )}
 
-        {/* Thank you message + verse */}
+        {/* Verse card after praying */}
         {thankYouVisible && (
-          <div className="mt-3 text-center animate-fade-out">
-            <p className="text-xs text-amber-600">
+          <div className="mt-5 animate-fade-out">
+            <p className="text-xs text-amber-600 text-center mb-3">
               Thank you for praying. They are not alone.
             </p>
-            <p className="font-serif text-[11px] text-stone-400 italic mt-1.5 leading-relaxed">
-              &ldquo;{verse.text}&rdquo; — {verse.reference}
-            </p>
+            <VerseCard text={verse.text} reference={verse.reference} />
+          </div>
+        )}
+
+        {/* Follow prompt after praying */}
+        {showFollowPrompt && !followed && (
+          <div className="mt-4 animate-fade-in">
+            <button
+              onClick={() => {
+                setFollowed(true);
+                setShowFollowPrompt(false);
+                followPrayer(prayer.id);
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-full text-sm font-medium bg-stone-50 text-stone-500 hover:bg-amber-50 hover:text-amber-700 transition-colors border border-stone-200/40"
+            >
+              <BookmarkSimple size={14} weight="thin" />
+              Follow this prayer for updates
+            </button>
           </div>
         )}
       </div>
@@ -324,7 +394,7 @@ export function PrayerDetail({
           className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
         >
           <BookmarkSimple size={16} weight={followed ? "duotone" : "thin"} className={followed ? "text-amber-500" : ""} />
-          {followed ? "Saved" : "Save"}
+          {followed ? "Following" : "Follow"}
         </button>
 
         {!reported ? (
@@ -342,13 +412,19 @@ export function PrayerDetail({
       </div>
 
       {/* Owner actions */}
-      {isOwner && (
-        <div className="mt-4">
+      {isOwner && prayer.status !== "answered" && (
+        <div className="mt-4 flex gap-3">
           <Link
             href={`/update/${prayer.id}`}
-            className="block text-center py-2.5 rounded-full text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
+            className="flex-1 block text-center py-2.5 rounded-full text-sm font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
           >
             Share an update
+          </Link>
+          <Link
+            href={`/update/${prayer.id}?type=answered`}
+            className="flex-1 block text-center py-2.5 rounded-full text-sm font-medium bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/60 transition-colors"
+          >
+            Mark as answered
           </Link>
         </div>
       )}
@@ -357,6 +433,8 @@ export function PrayerDetail({
       {showSheet && prayer.guided_prayer && (
         <GuidedPrayerSheet
           guidedPrayer={prayer.guided_prayer}
+          category={primaryCategory}
+          requestId={prayer.id}
           onDone={confirmPrayer}
           onClose={() => setShowSheet(false)}
         />

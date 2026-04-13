@@ -33,7 +33,6 @@ body {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
-/* Serif utility — applied via className */
 .font-serif {
   font-family: var(--font-source-serif), Georgia, 'Times New Roman', serif;
 }
@@ -46,6 +45,11 @@ body {
 @keyframes slide-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+
+@keyframes slide-up-slow {
+  from { transform: translateY(100%); opacity: 0.8; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes fade-out {
@@ -74,12 +78,21 @@ body {
   }
 }
 
+@keyframes halo-breathe {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(1.04); }
+}
+
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
 }
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+.animate-slide-up-slow {
+  animation: slide-up-slow 0.35s ease-out;
 }
 
 .animate-fade-out {
@@ -92,6 +105,10 @@ body {
 
 .animate-count-pulse {
   animation: count-pulse 0.6s ease-out;
+}
+
+.animate-halo-breathe {
+  animation: halo-breathe 4s ease-in-out infinite;
 }
 
 /* Hide scrollbar for filter pills */
